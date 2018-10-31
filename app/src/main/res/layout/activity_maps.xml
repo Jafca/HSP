@@ -26,11 +26,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end|bottom"
-        android:layout_margin="16dp"
-        android:layout_marginEnd="120dp"
-        android:layout_marginRight="120dp"
-        android:layout_marginBottom="24dp"
-        android:src="@drawable/baseline_pin_drop_black_18dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="64dp"
+        android:src="@drawable/pin_drop"
         map:layout_constraintBottom_toBottomOf="parent"
         map:layout_constraintEnd_toEndOf="parent" />
 </android.support.constraint.ConstraintLayout>

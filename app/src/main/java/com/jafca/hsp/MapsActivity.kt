@@ -1,13 +1,12 @@
 package com.jafca.hsp
 
+import android.arch.lifecycle.ViewModelProviders
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
-import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
+import android.support.v4.app.FragmentActivity
 import android.support.v7.app.AlertDialog
-import android.support.v7.app.AppCompatActivity
-import android.widget.Toast
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -18,8 +17,10 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.android.synthetic.main.activity_maps.*
+import java.util.*
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
+
+class MapsActivity : FragmentActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
     private var markers: MutableList<Marker> = mutableListOf()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -27,6 +28,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private var currentParkedLocation: ParkedLocation? = null
     private lateinit var mDbWorkerThread: DbWorkerThread
     private val mUiHandler = Handler()
+    private lateinit var model: SharedViewModel
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
@@ -39,6 +41,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
@@ -50,17 +53,40 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mDbWorkerThread.start()
         mDb = ParkedLocationDatabase.getInstance(this)
 
-        fab.setOnClickListener {
-            onFabClick()
+        addLocationButton.setOnClickListener {
+            onAddLocationButtonClick()
         }
+        addAlarmButton.setOnClickListener {
+            onAddAlarmButtonClick()
+        }
+
+        model = this.run {
+            ViewModelProviders.of(this).get(SharedViewModel::class.java)
+        }
+
+        model.reminderTime.observe(this, android.arch.lifecycle.Observer<Pair<Int, Int>> { hourMinute ->
+            if (currentParkedLocation != null) {
+                val calendar: Calendar = Calendar.getInstance().apply {
+                    timeInMillis = System.currentTimeMillis()
+                    set(Calendar.SECOND, 0)
+                    if (hourMinute != null) {
+                        set(Calendar.HOUR_OF_DAY, hourMinute.first)
+                    }
+                    if (hourMinute != null) {
+                        set(Calendar.MINUTE, hourMinute.second)
+                    }
+                }
+                val mNotificationTime = calendar.timeInMillis
+                NotificationUtils().setNotification(mNotificationTime, this@MapsActivity)
+            }
+        })
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
-        val runnableListener = object : RunnableListener {
+        val runnableListener = object : MapsActivity.RunnableListener {
             override fun onResult(result: ParkedLocation) {
-                currentParkedLocation = result
-                fab.setImageResource(R.drawable.delete)
+                setCurrentParkedLocation(result)
 
                 val markerOptions = MarkerOptions().position(LatLng(result.lat, result.lon))
                 markers.add(mMap.addMarker(markerOptions))
@@ -85,7 +111,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap.isMyLocationEnabled = true
     }
 
-    private fun fetchParkedLocationDataFromDb(runnableListener: RunnableListener) {
+    private fun fetchParkedLocationDataFromDb(runnableListener: MapsActivity.RunnableListener) {
         val task = Runnable {
             val parkedLocations = mDb?.parkedLocationDao()?.getAll()
             mUiHandler.post {
@@ -97,10 +123,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mDbWorkerThread.postTask(task)
     }
 
-    private fun onFabClick() {
+    private fun onAddLocationButtonClick() {
         if (currentParkedLocation == null) {
             getCurrentLocation()
-            fab.setImageResource(R.drawable.delete)
         } else {
             val builder = AlertDialog.Builder(this@MapsActivity)
             builder.setTitle("Remove Pin")
@@ -108,8 +133,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
             builder.setPositiveButton("YES") { _, _ ->
                 deleteParkedLocationInDb()
-                fab.setImageResource(R.drawable.pin_drop)
-                Toast.makeText(applicationContext, "Pin removed", Toast.LENGTH_SHORT).show()
+                NotificationUtils().cancelAlarms(this@MapsActivity)
             }
 
             builder.setNeutralButton("CANCEL") { _, _ -> }
@@ -117,6 +141,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             val dialog: AlertDialog = builder.create()
             dialog.show()
         }
+    }
+
+    private fun onAddAlarmButtonClick() {
+        TimePickerFragment().show(supportFragmentManager, "timePicker")
     }
 
     private fun getCurrentLocation() {
@@ -142,26 +170,31 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 val markerOptions = MarkerOptions().position(currentLatLng)
                 markers.add(mMap.addMarker(markerOptions))
-
-                Snackbar.make(
-                    findViewById(R.id.myConstraintLayout),
-                    "Your current location (${currentLatLng.latitude},${currentLatLng.longitude}) has been saved",
-                    Snackbar.LENGTH_LONG
-                )
-                    .setAction("Action", null)
-                    .show()
             }
         }
     }
 
-    private fun insertParkedLocationInDb(parkedLocation: ParkedLocation) {
+    private fun setCurrentParkedLocation(parkedLocation: ParkedLocation?) {
         currentParkedLocation = parkedLocation
+        if (parkedLocation == null) {
+            addLocationButton.setImageResource(R.drawable.pin_drop)
+            addAlarmButton.setImageResource(R.drawable.add_alarm_grey)
+            addAlarmButton.isEnabled = false
+        } else {
+            addLocationButton.setImageResource(R.drawable.delete)
+            addAlarmButton.setImageResource(R.drawable.add_alarm)
+            addAlarmButton.isEnabled = true
+        }
+    }
+
+    private fun insertParkedLocationInDb(parkedLocation: ParkedLocation) {
+        setCurrentParkedLocation(parkedLocation)
         val task = Runnable { mDb?.parkedLocationDao()?.insert(parkedLocation) }
         mDbWorkerThread.postTask(task)
     }
 
     private fun deleteParkedLocationInDb() {
-        currentParkedLocation = null
+        setCurrentParkedLocation(null)
         markers.forEach { marker -> marker.remove() }
 
         val task = Runnable { mDb?.parkedLocationDao()?.deleteAll() }

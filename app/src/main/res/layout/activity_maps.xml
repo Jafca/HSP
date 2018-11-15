@@ -37,6 +37,15 @@
         map:layout_constraintTop_toBottomOf="@+id/map">
 
         <ImageButton
+            android:id="@+id/addNoteButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:contentDescription="NoteButton"
+            android:src="@drawable/add_note_grey"
+            style="?android:attr/borderlessButtonStyle"/>
+
+        <ImageButton
             android:id="@+id/addAlarmButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"

@@ -7,6 +7,7 @@ import android.os.Handler
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.FragmentActivity
 import android.support.v7.app.AlertDialog
+import android.widget.EditText
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -58,6 +59,9 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
         }
         addAlarmButton.setOnClickListener {
             onAddAlarmButtonClick()
+        }
+        addNoteButton.setOnClickListener {
+            onAddNoteButtonClick()
         }
 
         model = this.run {
@@ -147,6 +151,27 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
         TimePickerFragment().show(supportFragmentManager, "timePicker")
     }
 
+    private fun onAddNoteButtonClick() {
+        val builder = AlertDialog.Builder(this)
+        val inflater = layoutInflater
+        builder.setTitle("Parking Note")
+        val dialogLayout = inflater.inflate(R.layout.alert_dialog_note, null)
+        val editText = dialogLayout.findViewById<EditText>(R.id.editNoteText)
+        if (!currentParkedLocation?.note.isNullOrBlank())
+            editText.setText(currentParkedLocation?.note)
+        builder.setView(dialogLayout)
+
+        builder.setPositiveButton("SAVE") { _, _ ->
+            currentParkedLocation?.note = editText.text.toString()
+            val location = currentParkedLocation
+            if (location != null)
+                updateParkedLocationInDb(location)
+        }
+
+        builder.setNeutralButton("CANCEL") { _, _ -> }
+        builder.show()
+    }
+
     private fun getCurrentLocation() {
         if (ActivityCompat.checkSelfPermission(
                 this,
@@ -180,16 +205,25 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
             addLocationButton.setImageResource(R.drawable.pin_drop)
             addAlarmButton.setImageResource(R.drawable.add_alarm_grey)
             addAlarmButton.isEnabled = false
+            addNoteButton.setImageResource(R.drawable.add_note_grey)
+            addNoteButton.isEnabled = false
         } else {
             addLocationButton.setImageResource(R.drawable.delete)
             addAlarmButton.setImageResource(R.drawable.add_alarm)
             addAlarmButton.isEnabled = true
+            addNoteButton.setImageResource(R.drawable.add_note)
+            addNoteButton.isEnabled = true
         }
     }
 
     private fun insertParkedLocationInDb(parkedLocation: ParkedLocation) {
         setCurrentParkedLocation(parkedLocation)
         val task = Runnable { mDb?.parkedLocationDao()?.insert(parkedLocation) }
+        mDbWorkerThread.postTask(task)
+    }
+
+    private fun updateParkedLocationInDb(parkedLocation: ParkedLocation) {
+        val task = Runnable { mDb?.parkedLocationDao()?.update(parkedLocation) }
         mDbWorkerThread.postTask(task)
     }
 

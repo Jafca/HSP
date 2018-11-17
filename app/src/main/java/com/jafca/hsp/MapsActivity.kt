@@ -1,13 +1,21 @@
 package com.jafca.hsp
 
 import android.arch.lifecycle.ViewModelProviders
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
+import android.provider.MediaStore
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.FragmentActivity
+import android.support.v4.content.FileProvider
 import android.support.v7.app.AlertDialog
+import android.view.View
 import android.widget.EditText
+import android.widget.ImageView
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -18,8 +26,9 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.android.synthetic.main.activity_maps.*
+import java.io.File
+import java.io.IOException
 import java.util.*
-
 
 class MapsActivity : FragmentActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
@@ -30,6 +39,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
     private lateinit var mDbWorkerThread: DbWorkerThread
     private val mUiHandler = Handler()
     private lateinit var model: SharedViewModel
+    private val REQUEST_TAKE_PHOTO = 1
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
@@ -62,6 +72,14 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
         }
         addNoteButton.setOnClickListener {
             onAddNoteButtonClick()
+        }
+        addPhotoButton.setOnClickListener {
+            onAddPhotoButtonClick()
+        }
+        photoImageView.setOnClickListener {
+            photoImageView.visibility = View.INVISIBLE
+            addPhotoButton.setImageResource(R.drawable.view_photo)
+            addPhotoButton.tag = "view"
         }
 
         model = this.run {
@@ -136,6 +154,8 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
             builder.setMessage("Are you sure you want to remove the pin?")
 
             builder.setPositiveButton("YES") { _, _ ->
+                val file = getPhoto()
+                file.delete()
                 deleteParkedLocationInDb()
                 NotificationUtils().cancelAlarms(this@MapsActivity)
             }
@@ -172,6 +192,88 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
         builder.show()
     }
 
+    private fun onAddPhotoButtonClick() {
+        if (addPhotoButton.tag == "add") {
+            dispatchTakePictureIntent()
+        } else {
+            setPic(findViewById(R.id.photoImageView), getPhoto().absolutePath)
+            addPhotoButton.setImageResource(R.drawable.add_photo)
+            addPhotoButton.tag = "add"
+        }
+    }
+
+    @Throws(IOException::class)
+    private fun getPhoto(): File {
+        return File(
+            getExternalFilesDir(Environment.DIRECTORY_PICTURES),
+            "HSP_${currentParkedLocation?.lat.toString() + currentParkedLocation?.lon.toString()}.jpg"
+        )
+    }
+
+    private fun dispatchTakePictureIntent() {
+        Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
+            // Ensure that there's a camera activity to handle the intent
+            takePictureIntent.resolveActivity(packageManager)?.also {
+                // Create the File where the photo should go
+                val photoFile: File? = try {
+                    getPhoto()
+                } catch (ex: IOException) {
+                    // Error occurred while creating the File
+                    null
+                }
+                // Continue only if the File was successfully created
+                photoFile?.also {
+                    val photoURI: Uri = FileProvider.getUriForFile(
+                        this,
+                        "com.jafca.hsp.fileprovider",
+                        it
+                    )
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+                    startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO)
+                }
+            }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        when (requestCode) {
+            REQUEST_TAKE_PHOTO -> {
+                photoImageView.visibility = View.INVISIBLE
+                if (getPhoto().exists()) {
+                    addPhotoButton.setImageResource(R.drawable.view_photo)
+                    addPhotoButton.tag = "view"
+                } else {
+                    addPhotoButton.setImageResource(R.drawable.add_photo)
+                    addPhotoButton.tag = "add"
+                }
+            }
+        }
+    }
+
+    private fun setPic(imgView: ImageView, filePath: String) {
+        val targetW: Int = imgView.width
+        val targetH: Int = imgView.height
+
+        val bfOptions = BitmapFactory.Options().apply {
+            inJustDecodeBounds = true
+            BitmapFactory.decodeFile(filePath, this)
+            val photoW: Int = outWidth
+            val photoH: Int = outHeight
+
+            // Determine how much to scale down the image
+            val scaleFactor: Int = Math.min(photoW / targetW, photoH / targetH)
+
+            // Decode the image file into a Bitmap sized to fill the View
+            inJustDecodeBounds = false
+            inSampleSize = scaleFactor
+        }
+        BitmapFactory.decodeFile(filePath, bfOptions)?.also { bitmap ->
+            imgView.setImageBitmap(bitmap)
+        }
+        imgView.visibility = View.VISIBLE
+    }
+
     private fun getCurrentLocation() {
         if (ActivityCompat.checkSelfPermission(
                 this,
@@ -201,18 +303,29 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
 
     private fun setCurrentParkedLocation(parkedLocation: ParkedLocation?) {
         currentParkedLocation = parkedLocation
+        photoImageView.visibility = View.INVISIBLE
         if (parkedLocation == null) {
             addLocationButton.setImageResource(R.drawable.pin_drop)
             addAlarmButton.setImageResource(R.drawable.add_alarm_grey)
             addAlarmButton.isEnabled = false
             addNoteButton.setImageResource(R.drawable.add_note_grey)
             addNoteButton.isEnabled = false
+            addPhotoButton.setImageResource(R.drawable.add_photo_grey)
+            addPhotoButton.isEnabled = true
         } else {
             addLocationButton.setImageResource(R.drawable.delete)
             addAlarmButton.setImageResource(R.drawable.add_alarm)
             addAlarmButton.isEnabled = true
             addNoteButton.setImageResource(R.drawable.add_note)
             addNoteButton.isEnabled = true
+            if (getPhoto().exists()) {
+                addPhotoButton.setImageResource(R.drawable.view_photo)
+                addPhotoButton.tag = "view"
+            } else {
+                addPhotoButton.setImageResource(R.drawable.add_photo)
+                addPhotoButton.tag = "add"
+            }
+            addPhotoButton.isEnabled = true
         }
     }
 

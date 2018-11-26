@@ -67,6 +67,9 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
         addLocationButton.setOnClickListener {
             onAddLocationButtonClick()
         }
+        findParkingButton.setOnClickListener {
+            onFindParkingButtonClick()
+        }
         addAlarmButton.setOnClickListener {
             onAddAlarmButtonClick()
         }
@@ -165,6 +168,21 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
             val dialog: AlertDialog = builder.create()
             dialog.show()
         }
+    }
+
+    private fun onFindParkingButtonClick() {
+        mMap.clear()
+        val builder = StringBuilder()
+        builder.append("https://maps.googleapis.com/maps/api/place/nearbysearch/json?")
+            .append("location=" + currentParkedLocation!!.lat + "," + currentParkedLocation!!.lon)
+            .append("&radius=10000")
+            .append("&type=parking")
+            .append("&sensor=true")
+            .append("&key=" + getString(R.string.google_maps_key))
+
+        val url = builder.toString()
+        val getNearbyPlacesData = GetNearbyPlacesData()
+        getNearbyPlacesData.execute(mMap, url, applicationContext)
     }
 
     private fun onAddAlarmButtonClick() {

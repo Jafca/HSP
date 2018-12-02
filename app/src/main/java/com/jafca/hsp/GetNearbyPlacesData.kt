@@ -150,8 +150,6 @@ class GetNearbyPlacesData : AsyncTask<Any, String, String>() {
             markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN))
 
             mMap!!.addMarker(markerOptions)
-            mMap!!.moveCamera(CameraUpdateFactory.newLatLng(latLng))
-            mMap!!.animateCamera(CameraUpdateFactory.zoomTo(10f))
         }
     }
 }

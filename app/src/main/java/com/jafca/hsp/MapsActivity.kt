@@ -39,14 +39,14 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
     private lateinit var mDbWorkerThread: DbWorkerThread
     private val mUiHandler = Handler()
     private lateinit var model: SharedViewModel
-    private val REQUEST_TAKE_PHOTO = 1
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
+        private const val REQUEST_TAKE_PHOTO = 2
     }
 
     interface RunnableListener {
-        fun onResult(result: ParkedLocation)
+        fun onResult(result: Any)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -110,13 +110,14 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         val runnableListener = object : MapsActivity.RunnableListener {
-            override fun onResult(result: ParkedLocation) {
+            override fun onResult(result: Any) {
+                val parkedLocation = result as ParkedLocation
                 setCurrentParkedLocation(result)
 
-                val markerOptions = MarkerOptions().position(LatLng(result.lat, result.lon))
+                val markerOptions = MarkerOptions().position(LatLng(parkedLocation.lat, parkedLocation.lon))
                 markers.add(mMap.addMarker(markerOptions))
 
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(result.lat, result.lon), 12f))
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(parkedLocation.lat, parkedLocation.lon),12f))
             }
         }
 
@@ -141,7 +142,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
             val parkedLocations = mDb?.parkedLocationDao()?.getAll()
             mUiHandler.post {
                 if (parkedLocations != null && parkedLocations.isNotEmpty()) {
-                    runnableListener.onResult(parkedLocations[0])
+                    runnableListener.onResult(parkedLocations.last())
                 }
             }
         }
@@ -150,7 +151,19 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
 
     private fun onAddLocationButtonClick() {
         if (currentParkedLocation == null) {
-            getCurrentLocation()
+            val runnableListener = object : MapsActivity.RunnableListener {
+                override fun onResult(result: Any) {
+                    val currentLatLng = result as LatLng
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 12f))
+                    deleteParkedLocationInDb()
+                    insertParkedLocationInDb(ParkedLocation(currentLatLng))
+
+                    val markerOptions = MarkerOptions().position(currentLatLng)
+                    markers.add(mMap.addMarker(markerOptions))
+                }
+            }
+
+            getCurrentLocation(runnableListener)
         } else {
             val builder = AlertDialog.Builder(this@MapsActivity)
             builder.setTitle("Remove Pin")
@@ -171,18 +184,32 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
     }
 
     private fun onFindParkingButtonClick() {
-        mMap.clear()
-        val builder = StringBuilder()
-        builder.append("https://maps.googleapis.com/maps/api/place/nearbysearch/json?")
-            .append("location=" + currentParkedLocation!!.lat + "," + currentParkedLocation!!.lon)
-            .append("&radius=10000")
-            .append("&type=parking")
-            .append("&sensor=true")
-            .append("&key=" + getString(R.string.google_maps_key))
+        val runnableListener = object : MapsActivity.RunnableListener {
+            override fun onResult(result: Any) {
+                val currentLatLng = result as LatLng
+                mMap.clear()
 
-        val url = builder.toString()
-        val getNearbyPlacesData = GetNearbyPlacesData()
-        getNearbyPlacesData.execute(mMap, url, applicationContext)
+                if (currentParkedLocation != null) {
+                    val markerOptions = MarkerOptions().position(
+                        LatLng(currentParkedLocation?.lat!!, currentParkedLocation?.lon!!)
+                    )
+                    markers.add(mMap.addMarker(markerOptions))
+                }
+                val builder = StringBuilder()
+                builder.append("https://maps.googleapis.com/maps/api/place/nearbysearch/json?")
+                    .append("location=" + currentLatLng.latitude + "," + currentLatLng.longitude)
+                    .append("&radius=10000")
+                    .append("&type=parking")
+                    .append("&key=" + getString(R.string.google_maps_key))
+
+                val url = builder.toString()
+                val getNearbyPlacesData = GetNearbyPlacesData()
+                getNearbyPlacesData.execute(mMap, url, applicationContext)
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 10f))
+            }
+        }
+
+        getCurrentLocation(runnableListener)
     }
 
     private fun onAddAlarmButtonClick() {
@@ -292,7 +319,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
         imgView.visibility = View.VISIBLE
     }
 
-    private fun getCurrentLocation() {
+    private fun getCurrentLocation(runnableListener: MapsActivity.RunnableListener) {
         if (ActivityCompat.checkSelfPermission(
                 this,
                 android.Manifest.permission.ACCESS_FINE_LOCATION
@@ -304,17 +331,13 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
             )
             return
         }
+
         mMap.isMyLocationEnabled = true
 
         fusedLocationClient.lastLocation.addOnSuccessListener(this) { location ->
             if (location != null) {
                 val currentLatLng = LatLng(location.latitude, location.longitude)
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 12f))
-                deleteParkedLocationInDb()
-                insertParkedLocationInDb(ParkedLocation(currentLatLng))
-
-                val markerOptions = MarkerOptions().position(currentLatLng)
-                markers.add(mMap.addMarker(markerOptions))
+                runnableListener.onResult(currentLatLng)
             }
         }
     }

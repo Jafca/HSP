@@ -3,11 +3,6 @@ package com.jafca.hsp
 import android.content.Context
 import android.os.AsyncTask
 import android.util.Log
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -20,11 +15,11 @@ import java.net.URL
 class GetNearbyPlacesData : AsyncTask<Any, String, String>() {
 
     var googlePlacesData: String? = null
-    var mMap: GoogleMap? = null
+    private lateinit var listener: MapsActivity.RunnableListener
     var url: String? = null
 
     override fun doInBackground(vararg objects: Any): String {
-        mMap = objects[0] as GoogleMap
+        listener = objects[0] as MapsActivity.RunnableListener
         url = objects[1] as String
 
         try {
@@ -72,7 +67,7 @@ class GetNearbyPlacesData : AsyncTask<Any, String, String>() {
 
     override fun onPostExecute(result: String) {
         val nearbyPlaceList: List<HashMap<String, String>> = parse(result)
-        showNearbyPlaces(nearbyPlaceList)
+        listener.onResult(nearbyPlaceList)
     }
 
     private fun parse(jsonData: String): List<HashMap<String, String>> {
@@ -132,24 +127,5 @@ class GetNearbyPlacesData : AsyncTask<Any, String, String>() {
         }
 
         return googlePlacesMap
-    }
-
-    private fun showNearbyPlaces(nearbyPlaceList: List<HashMap<String, String>>) {
-        for (i in 0 until nearbyPlaceList.size) {
-            val markerOptions = MarkerOptions()
-            val googlePlace = nearbyPlaceList[i]
-
-            val placeName = googlePlace["place_name"]
-            val vicinity = googlePlace["vicinity"]
-            val lat = java.lang.Double.parseDouble(googlePlace["lat"])
-            val lng = java.lang.Double.parseDouble(googlePlace["lng"])
-
-            val latLng = LatLng(lat, lng)
-            markerOptions.position(latLng)
-            markerOptions.title("$placeName : $vicinity")
-            markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN))
-
-            mMap!!.addMarker(markerOptions)
-        }
     }
 }

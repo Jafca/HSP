@@ -1,22 +1,30 @@
 package com.jafca.hsp
 
 import android.annotation.SuppressLint
-import android.app.*
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.media.RingtoneManager
 import android.os.Build
+import android.support.v4.app.JobIntentService
 import java.util.*
 
-class NotificationService : IntentService("NotificationService") {
+class NotificationService : JobIntentService() {
     private lateinit var mNotification: Notification
     private val mNotificationId: Int = 1000
 
     companion object {
+        private const val JOB_ID = 1000
         const val CHANNEL_ID = "hsp.jafca.com.CHANNEL_ID"
         const val CHANNEL_NAME = "Reminders"
+        fun enqueueWork(context: Context, work: Intent) {
+            enqueueWork(context, NotificationService::class.java, JOB_ID, work)
+        }
     }
 
     @SuppressLint("NewApi")
@@ -37,11 +45,11 @@ class NotificationService : IntentService("NotificationService") {
         }
     }
 
-    override fun onHandleIntent(intent: Intent?) {
+    override fun onHandleWork(intent: Intent) {
         createChannel()
         var timestamp: Long = 0
 
-        if (intent != null && intent.extras != null)
+        if (intent.extras != null)
             timestamp = intent.extras!!.getLong("timestamp")
 
         if (timestamp > 0) {

@@ -4,6 +4,7 @@ import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
+import android.location.Location
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
@@ -13,6 +14,7 @@ import android.support.v4.app.ActivityCompat
 import android.support.v4.app.FragmentActivity
 import android.support.v4.content.FileProvider
 import android.support.v7.app.AlertDialog
+import android.util.Log
 import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
@@ -22,6 +24,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
@@ -203,8 +206,15 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
                     .append("&key=" + getString(R.string.google_maps_key))
 
                 val url = builder.toString()
+
+                val runnableListener2 = object : MapsActivity.RunnableListener {
+                    override fun onResult(result: Any) {
+                        val nearbyPlaceList = result as List<HashMap<String, String>>
+                        showNearbyPlaces(nearbyPlaceList, currentLatLng)
+                    }
+                }
                 val getNearbyPlacesData = GetNearbyPlacesData()
-                getNearbyPlacesData.execute(mMap, url, applicationContext)
+                getNearbyPlacesData.execute(runnableListener2, url, applicationContext)
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 10f))
             }
         }
@@ -244,6 +254,45 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
             setPic(findViewById(R.id.photoImageView), getPhoto().absolutePath)
             addPhotoButton.setImageResource(R.drawable.add_photo)
             addPhotoButton.tag = "add"
+        }
+    }
+
+    private fun showNearbyPlaces(nearbyPlaceList: List<HashMap<String, String>>, currentLatLng: LatLng) {
+        val distances = FloatArray(nearbyPlaceList.size)
+        Log.i("Distance count", nearbyPlaceList.size.toString())
+        Log.i("Distance info", currentLatLng.toString())
+
+        for (i in 0 until nearbyPlaceList.size) {
+            val markerOptions = MarkerOptions()
+            val googlePlace = nearbyPlaceList[i]
+
+            val placeName = googlePlace["place_name"]
+            val vicinity = googlePlace["vicinity"]
+            val lat = java.lang.Double.parseDouble(googlePlace["lat"])
+            val lng = java.lang.Double.parseDouble(googlePlace["lng"])
+
+            val latLng = LatLng(lat, lng)
+            markerOptions.position(latLng)
+            markerOptions.title("$placeName : $vicinity")
+            markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN))
+
+            mMap.addMarker(markerOptions)
+
+            val result = FloatArray(1)
+            Location.distanceBetween(
+                currentLatLng.latitude,
+                currentLatLng.longitude,
+                latLng.latitude,
+                latLng.longitude,
+                result
+            )
+            distances[i] = result[0]
+
+            val x = distances[i] < 50
+            if (x)
+                Log.i("Close Distance", markerOptions.title + ": " + distances[i].toString() + ": " + latLng.toString())
+            else
+                Log.i("Far Distance", markerOptions.title + ": " + distances[i].toString() + ": " + latLng.toString())
         }
     }
 

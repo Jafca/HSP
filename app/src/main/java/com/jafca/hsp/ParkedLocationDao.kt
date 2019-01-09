@@ -1,7 +1,7 @@
 package com.jafca.hsp
 
-import android.arch.persistence.room.*
-import android.arch.persistence.room.OnConflictStrategy.REPLACE
+import androidx.room.*
+import androidx.room.OnConflictStrategy.REPLACE
 
 @Dao
 interface ParkedLocationDao {

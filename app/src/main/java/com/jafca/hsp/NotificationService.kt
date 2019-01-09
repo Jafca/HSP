@@ -11,7 +11,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.media.RingtoneManager
 import android.os.Build
-import android.support.v4.app.JobIntentService
+import androidx.core.app.JobIntentService
 import java.util.*
 
 class NotificationService : JobIntentService() {

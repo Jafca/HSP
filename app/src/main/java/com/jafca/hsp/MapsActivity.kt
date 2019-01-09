@@ -1,6 +1,5 @@
 package com.jafca.hsp
 
-import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
@@ -10,14 +9,15 @@ import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
 import android.provider.MediaStore
-import android.support.v4.app.ActivityCompat
-import android.support.v4.app.FragmentActivity
-import android.support.v4.content.FileProvider
-import android.support.v7.app.AlertDialog
 import android.util.Log
 import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
+import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
+import androidx.core.content.FileProvider
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.ViewModelProviders
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -35,7 +35,10 @@ import java.util.*
 
 class MapsActivity : FragmentActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
-    private var markers: MutableList<Marker> = mutableListOf()
+    var markerMap: MutableMap<Marker, Int> = mutableMapOf()
+        private set(value) {
+            field = value
+        }
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var mDb: ParkedLocationDatabase? = null
     private var currentParkedLocation: ParkedLocation? = null
@@ -46,6 +49,8 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
         private const val REQUEST_TAKE_PHOTO = 2
+        private const val CURRENT_PARKING = 1
+        private const val NEARBY_PARKING = 2
     }
 
     interface RunnableListener {
@@ -67,6 +72,9 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
         mDbWorkerThread.start()
         mDb = ParkedLocationDatabase.getInstance(this)
 
+        setCurrentParkedLocation(null)
+        findParkingButton.tag = R.string.parking_show_tag
+
         addLocationButton.setOnClickListener {
             onAddLocationButtonClick()
         }
@@ -85,14 +93,14 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
         photoImageView.setOnClickListener {
             photoImageView.visibility = View.INVISIBLE
             addPhotoButton.setImageResource(R.drawable.view_photo)
-            addPhotoButton.tag = "view"
+            addPhotoButton.tag = R.drawable.view_photo
         }
 
         model = this.run {
             ViewModelProviders.of(this).get(SharedViewModel::class.java)
         }
 
-        model.reminderTime.observe(this, android.arch.lifecycle.Observer<Pair<Int, Int>> { hourMinute ->
+        model.reminderTime.observe(this, androidx.lifecycle.Observer<Pair<Int, Int>> { hourMinute ->
             if (currentParkedLocation != null) {
                 val calendar: Calendar = Calendar.getInstance().apply {
                     timeInMillis = System.currentTimeMillis()
@@ -118,9 +126,14 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
                 setCurrentParkedLocation(result)
 
                 val markerOptions = MarkerOptions().position(LatLng(parkedLocation.lat, parkedLocation.lon))
-                markers.add(mMap.addMarker(markerOptions))
+                markerMap[mMap.addMarker(markerOptions)] = CURRENT_PARKING
 
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(parkedLocation.lat, parkedLocation.lon),12f))
+                mMap.animateCamera(
+                    CameraUpdateFactory.newLatLngZoom(
+                        LatLng(parkedLocation.lat, parkedLocation.lon),
+                        12f
+                    )
+                )
             }
         }
 
@@ -158,11 +171,10 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
                 override fun onResult(result: Any) {
                     val currentLatLng = result as LatLng
                     mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 12f))
-                    deleteParkedLocationInDb()
                     insertParkedLocationInDb(ParkedLocation(currentLatLng))
 
                     val markerOptions = MarkerOptions().position(currentLatLng)
-                    markers.add(mMap.addMarker(markerOptions))
+                    markerMap[mMap.addMarker(markerOptions)] = CURRENT_PARKING
                 }
             }
 
@@ -170,7 +182,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
         } else {
             val builder = AlertDialog.Builder(this@MapsActivity)
             builder.setTitle("Remove Pin")
-            builder.setMessage("Are you sure you want to remove the pin?")
+            builder.setMessage(R.string.remove_pin_text)
 
             builder.setPositiveButton("YES") { _, _ ->
                 val file = getPhoto()
@@ -179,7 +191,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
                 NotificationUtils().cancelAlarms(this@MapsActivity)
             }
 
-            builder.setNeutralButton("CANCEL") { _, _ -> }
+            builder.setNegativeButton("CANCEL") { _, _ -> }
 
             val dialog: AlertDialog = builder.create()
             dialog.show()
@@ -187,39 +199,44 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
     }
 
     private fun onFindParkingButtonClick() {
-        val runnableListener = object : MapsActivity.RunnableListener {
-            override fun onResult(result: Any) {
-                val currentLatLng = result as LatLng
-                mMap.clear()
+        if (findParkingButton.tag == R.string.parking_hide_tag) {
+            findParkingButton.tag = R.string.parking_show_tag
 
-                if (currentParkedLocation != null) {
-                    val markerOptions = MarkerOptions().position(
-                        LatLng(currentParkedLocation?.lat!!, currentParkedLocation?.lon!!)
-                    )
-                    markers.add(mMap.addMarker(markerOptions))
+            val iterator = markerMap.iterator()
+            iterator.forEach {
+                if (it.value == NEARBY_PARKING) {
+                    it.key.remove()
+                    iterator.remove()
                 }
-                val builder = StringBuilder()
-                builder.append("https://maps.googleapis.com/maps/api/place/nearbysearch/json?")
-                    .append("location=" + currentLatLng.latitude + "," + currentLatLng.longitude)
-                    .append("&radius=10000")
-                    .append("&type=parking")
-                    .append("&key=" + getString(R.string.google_maps_key))
-
-                val url = builder.toString()
-
-                val runnableListener2 = object : MapsActivity.RunnableListener {
-                    override fun onResult(result: Any) {
-                        val nearbyPlaceList = result as List<HashMap<String, String>>
-                        showNearbyPlaces(nearbyPlaceList, currentLatLng)
-                    }
-                }
-                val getNearbyPlacesData = GetNearbyPlacesData()
-                getNearbyPlacesData.execute(runnableListener2, url, applicationContext)
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 10f))
             }
-        }
+        } else {
+            val runnableListener = object : MapsActivity.RunnableListener {
+                override fun onResult(result: Any) {
+                    val currentLatLng = result as LatLng
 
-        getCurrentLocation(runnableListener)
+                    val builder = StringBuilder()
+                    builder.append("https://maps.googleapis.com/maps/api/place/nearbysearch/json?")
+                        .append("location=" + currentLatLng.latitude + "," + currentLatLng.longitude)
+                        .append("&radius=10000")
+                        .append("&type=parking")
+                        .append("&key=" + getString(R.string.google_maps_key))
+                    val url = builder.toString()
+
+                    val runnableListener2 = object : MapsActivity.RunnableListener {
+                        override fun onResult(result: Any) {
+                            val nearbyPlaceList = result as List<HashMap<String, String>>
+                            showNearbyPlaces(nearbyPlaceList, currentLatLng)
+                        }
+                    }
+                    val getNearbyPlacesData = GetNearbyPlacesData()
+                    getNearbyPlacesData.execute(runnableListener2, url, applicationContext)
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 10f))
+                    findParkingButton.tag = R.string.parking_hide_tag
+                }
+            }
+
+            getCurrentLocation(runnableListener)
+        }
     }
 
     private fun onAddAlarmButtonClick() {
@@ -243,22 +260,21 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
                 updateParkedLocationInDb(location)
         }
 
-        builder.setNeutralButton("CANCEL") { _, _ -> }
+        builder.setNegativeButton("CANCEL") { _, _ -> }
         builder.show()
     }
 
     private fun onAddPhotoButtonClick() {
-        if (addPhotoButton.tag == "add") {
+        if (addPhotoButton.tag == R.drawable.add_photo) {
             dispatchTakePictureIntent()
         } else {
             setPic(findViewById(R.id.photoImageView), getPhoto().absolutePath)
             addPhotoButton.setImageResource(R.drawable.add_photo)
-            addPhotoButton.tag = "add"
+            addPhotoButton.tag = R.drawable.add_photo
         }
     }
 
     private fun showNearbyPlaces(nearbyPlaceList: List<HashMap<String, String>>, currentLatLng: LatLng) {
-        val distances = FloatArray(nearbyPlaceList.size)
         Log.i("Distance count", nearbyPlaceList.size.toString())
         Log.i("Distance info", currentLatLng.toString())
 
@@ -276,7 +292,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
             markerOptions.title("$placeName : $vicinity")
             markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN))
 
-            mMap.addMarker(markerOptions)
+            markerMap[mMap.addMarker(markerOptions)] = NEARBY_PARKING
 
             val result = FloatArray(1)
             Location.distanceBetween(
@@ -286,13 +302,6 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
                 latLng.longitude,
                 result
             )
-            distances[i] = result[0]
-
-            val x = distances[i] < 50
-            if (x)
-                Log.i("Close Distance", markerOptions.title + ": " + distances[i].toString() + ": " + latLng.toString())
-            else
-                Log.i("Far Distance", markerOptions.title + ": " + distances[i].toString() + ": " + latLng.toString())
         }
     }
 
@@ -336,10 +345,10 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
                 photoImageView.visibility = View.INVISIBLE
                 if (getPhoto().exists()) {
                     addPhotoButton.setImageResource(R.drawable.view_photo)
-                    addPhotoButton.tag = "view"
+                    addPhotoButton.tag = R.drawable.view_photo
                 } else {
                     addPhotoButton.setImageResource(R.drawable.add_photo)
-                    addPhotoButton.tag = "add"
+                    addPhotoButton.tag = R.drawable.add_photo
                 }
             }
         }
@@ -397,24 +406,35 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
         if (parkedLocation == null) {
             addLocationButton.setImageResource(R.drawable.pin_drop)
             addAlarmButton.setImageResource(R.drawable.add_alarm_grey)
-            addAlarmButton.isEnabled = false
             addNoteButton.setImageResource(R.drawable.add_note_grey)
-            addNoteButton.isEnabled = false
             addPhotoButton.setImageResource(R.drawable.add_photo_grey)
-            addPhotoButton.isEnabled = true
+
+            addLocationButton.tag = R.drawable.pin_drop
+            addAlarmButton.tag = R.drawable.add_alarm_grey
+            addNoteButton.tag = R.drawable.add_note_grey
+            addPhotoButton.tag = R.drawable.add_photo_grey
+
+            addAlarmButton.isEnabled = false
+            addNoteButton.isEnabled = false
+            addPhotoButton.isEnabled = false
         } else {
             addLocationButton.setImageResource(R.drawable.delete)
             addAlarmButton.setImageResource(R.drawable.add_alarm)
-            addAlarmButton.isEnabled = true
             addNoteButton.setImageResource(R.drawable.add_note)
-            addNoteButton.isEnabled = true
+            addLocationButton.tag = R.drawable.delete
+            addAlarmButton.tag = R.drawable.add_alarm
+            addNoteButton.tag = R.drawable.add_note
+
             if (getPhoto().exists()) {
                 addPhotoButton.setImageResource(R.drawable.view_photo)
-                addPhotoButton.tag = "view"
+                addPhotoButton.tag = R.drawable.view_photo
             } else {
                 addPhotoButton.setImageResource(R.drawable.add_photo)
-                addPhotoButton.tag = "add"
+                addPhotoButton.tag = R.drawable.add_photo
             }
+
+            addAlarmButton.isEnabled = true
+            addNoteButton.isEnabled = true
             addPhotoButton.isEnabled = true
         }
     }
@@ -432,7 +452,13 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
 
     private fun deleteParkedLocationInDb() {
         setCurrentParkedLocation(null)
-        markers.forEach { marker -> marker.remove() }
+        val iterator = markerMap.iterator()
+        iterator.forEach {
+            if (it.value == CURRENT_PARKING) {
+                it.key.remove()
+                iterator.remove()
+            }
+        }
 
         val task = Runnable { mDb?.parkedLocationDao()?.deleteAll() }
         mDbWorkerThread.postTask(task)

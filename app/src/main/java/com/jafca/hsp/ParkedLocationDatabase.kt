@@ -1,9 +1,9 @@
 package com.jafca.hsp
 
-import android.arch.persistence.room.Database
-import android.arch.persistence.room.Room
-import android.arch.persistence.room.RoomDatabase
 import android.content.Context
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
 
 @Database(entities = [ParkedLocation::class], version = 1)
 abstract class ParkedLocationDatabase : RoomDatabase() {
@@ -16,8 +16,10 @@ abstract class ParkedLocationDatabase : RoomDatabase() {
         fun getInstance(context: Context): ParkedLocationDatabase? {
             if (INSTANCE == null) {
                 synchronized(ParkedLocationDatabase::class) {
-                    INSTANCE = Room.databaseBuilder(context.applicationContext,
-                        ParkedLocationDatabase::class.java, "parkedLocation.db")
+                    INSTANCE = Room.databaseBuilder(
+                        context.applicationContext,
+                        ParkedLocationDatabase::class.java, "parkedLocation.db"
+                    )
                         .build()
                 }
             }

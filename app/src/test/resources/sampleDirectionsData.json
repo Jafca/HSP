@@ -1,0 +1,163 @@
+{
+  "geocoded_waypoints": [
+    {
+      "geocoder_status": "OK",
+      "place_id": "ChIJg8thd6-_eEgRFxF6iSiyoew",
+      "types": [
+        "premise"
+      ]
+    },
+    {
+      "geocoder_status": "OK",
+      "place_id": "ChIJgaeJn6-_eEgReVUXxdQ_YvE",
+      "types": [
+        "premise"
+      ]
+    }
+  ],
+  "routes": [
+    {
+      "bounds": {
+        "northeast": {
+          "lat": 53.7715131,
+          "lng": -0.3685166
+        },
+        "southwest": {
+          "lat": 53.7706633,
+          "lng": -0.3698741
+        }
+      },
+      "copyrights": "Map data ©2019 Google",
+      "legs": [
+        {
+          "distance": {
+            "text": "0.3 km",
+            "value": 275
+          },
+          "duration": {
+            "text": "3 mins",
+            "value": 203
+          },
+          "end_address": "Robert Blackburn, Hull HU6 7RU, UK",
+          "end_location": {
+            "lat": 53.7714136,
+            "lng": -0.3689996
+          },
+          "start_address": "Fenner, Hull HU6 7RU, UK",
+          "start_location": {
+            "lat": 53.7715131,
+            "lng": -0.3698741
+          },
+          "steps": [
+            {
+              "distance": {
+                "text": "90 m",
+                "value": 90
+              },
+              "duration": {
+                "text": "1 min",
+                "value": 68
+              },
+              "end_location": {
+                "lat": 53.77071309999999,
+                "lng": -0.3697258
+              },
+              "html_instructions": "Walk \u003cb\u003esouth\u003c/b\u003e",
+              "polyline": {
+                "points": "}fegItfgAJCTEBAr@KdAC"
+              },
+              "start_location": {
+                "lat": 53.7715131,
+                "lng": -0.3698741
+              },
+              "travel_mode": "WALKING"
+            },
+            {
+              "distance": {
+                "text": "72 m",
+                "value": 72
+              },
+              "duration": {
+                "text": "1 min",
+                "value": 56
+              },
+              "end_location": {
+                "lat": 53.7706633,
+                "lng": -0.3686321
+              },
+              "html_instructions": "Turn \u003cb\u003eleft\u003c/b\u003e",
+              "maneuver": "turn-left",
+              "polyline": {
+                "points": "}aegIxegAH{E"
+              },
+              "start_location": {
+                "lat": 53.77071309999999,
+                "lng": -0.3697258
+              },
+              "travel_mode": "WALKING"
+            },
+            {
+              "distance": {
+                "text": "81 m",
+                "value": 81
+              },
+              "duration": {
+                "text": "1 min",
+                "value": 58
+              },
+              "end_location": {
+                "lat": 53.7713915,
+                "lng": -0.3685166
+              },
+              "html_instructions": "Turn \u003cb\u003eleft\u003c/b\u003e",
+              "maneuver": "turn-left",
+              "polyline": {
+                "points": "saegI|~fA{AKu@I"
+              },
+              "start_location": {
+                "lat": 53.7706633,
+                "lng": -0.3686321
+              },
+              "travel_mode": "WALKING"
+            },
+            {
+              "distance": {
+                "text": "32 m",
+                "value": 32
+              },
+              "duration": {
+                "text": "1 min",
+                "value": 21
+              },
+              "end_location": {
+                "lat": 53.7714136,
+                "lng": -0.3689996
+              },
+              "html_instructions": "Turn \u003cb\u003eleft\u003c/b\u003e\u003cdiv style=\"font-size:0.9em\"\u003eDestination will be on the right\u003c/div\u003e",
+              "maneuver": "turn-left",
+              "polyline": {
+                "points": "efegIf~fAC~A"
+              },
+              "start_location": {
+                "lat": 53.7713915,
+                "lng": -0.3685166
+              },
+              "travel_mode": "WALKING"
+            }
+          ],
+          "traffic_speed_entry": [],
+          "via_waypoint": []
+        }
+      ],
+      "overview_polyline": {
+        "points": "}fegItfgAd@Kr@KdACH{E{AKu@IC~A"
+      },
+      "summary": "",
+      "warnings": [
+        "Walking directions are in beta.    Use caution – This route may be missing sidewalks or pedestrian paths."
+      ],
+      "waypoint_order": []
+    }
+  ],
+  "status": "OK"
+}

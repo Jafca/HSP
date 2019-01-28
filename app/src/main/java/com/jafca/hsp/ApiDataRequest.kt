@@ -9,8 +9,8 @@ import java.net.HttpURLConnection
 import java.net.MalformedURLException
 import java.net.URL
 
-class GetNearbyPlacesData : AsyncTask<Any, String, String>() {
-    var googlePlacesData: String? = null
+class ApiDataRequest : AsyncTask<Any, String, String>() {
+    var apiData: String? = null
     private lateinit var listener: MapsActivity.RunnableListener
     var url: String? = null
 
@@ -19,12 +19,12 @@ class GetNearbyPlacesData : AsyncTask<Any, String, String>() {
         url = objects[1] as String
 
         try {
-            googlePlacesData = readUrl(url!!, objects[2] as Context)
+            apiData = readUrl(url!!, objects[2] as Context)
         } catch (e: IOException) {
             e.printStackTrace()
         }
 
-        return googlePlacesData!!
+        return apiData!!
     }
 
     @Throws(IOException::class)
@@ -35,7 +35,11 @@ class GetNearbyPlacesData : AsyncTask<Any, String, String>() {
 
         if (BuildConfig.DEBUG) {
             try {
-                inputStream = context.resources.openRawResource(R.raw.nearbysearch)
+                inputStream = if (myUrl.startsWith("https://maps.googleapis.com/maps/api/place")) {
+                    context.resources.openRawResource(R.raw.nearbysearch)
+                } else {
+                    context.resources.openRawResource(R.raw.directions)
+                }
                 data = inputStream.bufferedReader().use { it.readText() }
             } catch (e: Exception) {
                 Log.d("JSON ERROR", e.toString())
@@ -62,8 +66,6 @@ class GetNearbyPlacesData : AsyncTask<Any, String, String>() {
     }
 
     override fun onPostExecute(result: String) {
-        val parseNearbyPlacesData = ParseNearbyPlacesData()
-        val nearbyPlaceList: List<HashMap<String, String>> = parseNearbyPlacesData.parse(result)
-        listener.onResult(nearbyPlaceList)
+        listener.onResult(result)
     }
 }

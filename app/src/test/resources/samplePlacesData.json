@@ -1,0 +1,135 @@
+{
+  "html_attributions": [],
+  "next_page_token": "CpQECAIAAApdnSmo3740zxeA5R01BlZFAD7sq7Br0muUN8AKln9Fpv5nWuR32I3qM81d18BhRWAFaVrhHSg-7jq8g5_V2hKxM-OmR3t1be98d19LIjhyRUX21gqugZxDYSnNFkziCBqknmCWiVd5Y1APdnGSMFHPjq53gml87wFvwv3c0CvnO3BYomiviqDop2Qg9k32HPeVtHkYWdrVt1BMJ2XOleO5hP1wNM1nKwc7rZqdjnAHp09myXxrL8HSRYdbJstrYAGxXYHsP6t68eTgNKPgA-HCMaRQ27wj0qKfk6roawvtiF75F_BbcRl1jYqF-BI6yDbEHsacTe5JyM4Kj09UmyVy2Qpmy08pYDNjnQT_K6q3lywJ1qsBIQHhyiqeMm8HA7sB4qUPQ3LyMwT6e8AMt6SDzhGUpF5hVrIStJV12swkUox7lgdCLNYaDJ_xnZnZcDVqfGsELcK1WeZmbsyQfgAWLaOQK_Wgk_il22oAXG2t29DrS_2skrcs12VLSDHri7Z44rOcnXKAFtr5aza2h61mVbDa9GEXiPRQmvElaWr81h6H6PZmtGHDK_iiP9VAad-FTWIg9rSTsvhrSVlucZ2tYlErpO58EHFHYHfcPA3HMnrQjP0eMWkRkPfpdkYt4yPHuerbiLs3FFKk0pQw3U6XfLaI0Iijdvjr6I-0qf91eQ4wgFB0IT3QyymtnLIcMhIQNIBiFlIpL-DkXYew9JMB2hoUFNiw7tNl9-9DxFEBhBJIRO8f7VU",
+  "results": [
+    {
+      "geometry": {
+        "location": {
+          "lat": 53.741356,
+          "lng": -0.3332544
+        },
+        "viewport": {
+          "northeast": {
+            "lat": 53.74270498029149,
+            "lng": -0.331905419708498
+          },
+          "southwest": {
+            "lat": 53.7400070197085,
+            "lng": -0.3346033802915021
+          }
+        }
+      },
+      "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/generic_business-71.png",
+      "id": "e27bee3852c50fc0511bfae7dbed0a0f9b0552f2",
+      "name": "APCOA King William House Car Park",
+      "opening_hours": {
+        "open_now": true
+      },
+      "photos": [
+        {
+          "height": 959,
+          "html_attributions": [
+            "\u003ca href=\"https://maps.google.com/maps/contrib/107467299233097487771/photos\"\u003eSunny Costin\u003c/a\u003e"
+          ],
+          "photo_reference": "CmRaAAAARdubB8sl1Nxu1o41jbDHHu5OXnX1inyTpvOh70aLtKBvZGYH5-unpy43MFqEO0pTRsZDQnjAuj_zsN6uNd-FybxxRvGkOVZHR6jGl2w7GfN2Tm6WGS2u_6_JxRE1-TMlEhA5kAYYaUNEl9w8iww8EkxrGhQJI6748Hm-Ub5yNjQPEM7gIf1Fog",
+          "width": 1280
+        }
+      ],
+      "place_id": "ChIJBW2iCCK-eEgRCcovwuVgW_o",
+      "plus_code": {
+        "compound_code": "PMR8+GM Hull, United Kingdom",
+        "global_code": "9C5XPMR8+GM"
+      },
+      "rating": 3.3,
+      "reference": "ChIJBW2iCCK-eEgRCcovwuVgW_o",
+      "scope": "GOOGLE",
+      "types": [
+        "parking",
+        "point_of_interest",
+        "establishment"
+      ],
+      "vicinity": "King William House, Lowgate, Hull"
+    },
+    {
+      "geometry": {
+        "location": {
+          "lat": 53.7484591,
+          "lng": -0.3455031
+        },
+        "viewport": {
+          "northeast": {
+            "lat": 53.74975948029149,
+            "lng": -0.344127769708498
+          },
+          "southwest": {
+            "lat": 53.7470615197085,
+            "lng": -0.346825730291502
+          }
+        }
+      },
+      "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/generic_business-71.png",
+      "id": "0a68f15278954fb4af076259665778a016e65500",
+      "place_id": "ChIJ2b7_EjC-eEgRUBBP_E7Esrw",
+      "plus_code": {
+        "compound_code": "PMX3+9Q Hull, United Kingdom",
+        "global_code": "9C5XPMX3+9Q"
+      },
+      "reference": "ChIJ2b7_EjC-eEgRUBBP_E7Esrw",
+      "scope": "GOOGLE",
+      "types": [
+        "parking",
+        "point_of_interest",
+        "establishment"
+      ],
+      "vicinity": "8 Pryme Street, Hull"
+    },
+    {
+      "geometry": {
+        "location": {
+          "lat": 53.7468388,
+          "lng": -0.3494753999999999
+        },
+        "viewport": {
+          "northeast": {
+            "lat": 53.7481905802915,
+            "lng": -0.3481362697084979
+          },
+          "southwest": {
+            "lat": 53.7454926197085,
+            "lng": -0.350834230291502
+          }
+        }
+      },
+      "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/generic_business-71.png",
+      "id": "1b3ab86161737b0a2bbdef44ad13c367bd5dc630",
+      "name": "St Stephens Square Car Park",
+      "opening_hours": {
+        "open_now": true
+      },
+      "photos": [
+        {
+          "height": 3120,
+          "html_attributions": [
+            "\u003ca href=\"https://maps.google.com/maps/contrib/101811209502343497039/photos\"\u003eDaniel Bertman\u003c/a\u003e"
+          ],
+          "photo_reference": "CmRaAAAA2hNMY-ZbhfbPR1VrH6KAzmRrWIr1tOMHto6swJLc6XGWFf3mZDQSsH6wAPFZgmjJhZCJqNG0uNPzS8y5rwbgf92h0YRYFFa7o3wfKvwbHW2meCzqcHhyGKmQYYycOEKTEhBudUzdoBhVXOwFImNr6dvbGhT3gVq6ObzHPGHs39qwruRQrRrr-w",
+          "width": 4160
+        }
+      ],
+      "place_id": "ChIJK07eGC6-eEgRUS3w1fHrlrQ",
+      "plus_code": {
+        "compound_code": "PMW2+P6 Hull, United Kingdom",
+        "global_code": "9C5XPMW2+P6"
+      },
+      "rating": 4.2,
+      "reference": "ChIJK07eGC6-eEgRUS3w1fHrlrQ",
+      "scope": "GOOGLE",
+      "types": [
+        "parking",
+        "point_of_interest",
+        "establishment"
+      ]
+    }
+  ],
+  "status": "OK"
+}

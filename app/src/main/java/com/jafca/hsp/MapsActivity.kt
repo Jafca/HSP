@@ -3,6 +3,7 @@ package com.jafca.hsp
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.location.Location
 import android.net.Uri
 import android.os.Bundle
@@ -13,6 +14,7 @@ import android.util.Log
 import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.FileProvider
@@ -24,21 +26,21 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
 import kotlinx.android.synthetic.main.activity_maps.*
 import java.io.File
 import java.io.IOException
 import java.util.*
 
-class MapsActivity : FragmentActivity(), OnMapReadyCallback {
+class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
     private lateinit var mMap: GoogleMap
     var markerMap: MutableMap<Marker, Int> = mutableMapOf()
         private set(value) {
             field = value
         }
+    var polylineDrawn = false
+    private var polylineDestination: Marker? = null
+    private lateinit var polyline: Polyline
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var mDb: ParkedLocationDatabase? = null
     private var currentParkedLocation: ParkedLocation? = null
@@ -120,6 +122,8 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
+        mMap.setOnMarkerClickListener(this)
+
         val runnableListener = object : MapsActivity.RunnableListener {
             override fun onResult(result: Any) {
                 val parkedLocation = result as ParkedLocation
@@ -209,6 +213,12 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
                     iterator.remove()
                 }
             }
+
+            if (polylineDrawn) {
+                polyline.remove()
+                polylineDrawn = false
+                polylineDestination = null
+            }
         } else {
             val runnableListener = object : MapsActivity.RunnableListener {
                 override fun onResult(result: Any) {
@@ -224,13 +234,14 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
 
                     val runnableListener2 = object : MapsActivity.RunnableListener {
                         override fun onResult(result: Any) {
-                            val nearbyPlaceList = result as List<HashMap<String, String>>
+                            val apiDataParser = ApiDataParser()
+                            val nearbyPlaceList: List<HashMap<String, String>> =
+                                apiDataParser.parsePlaces(result as String)
                             showNearbyPlaces(nearbyPlaceList, currentLatLng)
                         }
                     }
-                    val getNearbyPlacesData = GetNearbyPlacesData()
-                    getNearbyPlacesData.execute(runnableListener2, url, applicationContext)
-                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 10f))
+                    val apiDataRequest = ApiDataRequest()
+                    apiDataRequest.execute(runnableListener2, url, applicationContext)
                     findParkingButton.tag = R.string.parking_hide_tag
                 }
             }
@@ -303,6 +314,88 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
                 result
             )
         }
+
+        val bounds = markerMap.keys.fold(LatLngBounds.builder()) { builder, it -> builder.include(it.position) }.build()
+        val width = resources.displayMetrics.widthPixels
+        val height = resources.displayMetrics.heightPixels
+        val padding = width * 0.2
+        mMap.animateCamera(
+            CameraUpdateFactory.newLatLngBounds(
+                bounds,
+                width,
+                height,
+                padding.toInt()
+            )
+        )
+    }
+
+    override fun onMarkerClick(marker: Marker): Boolean {
+        if (polylineDrawn) {
+            polyline.remove()
+            polylineDrawn = false
+        }
+
+        if (marker == polylineDestination) {
+            polylineDestination = null
+        } else {
+            val runnableListener = object : MapsActivity.RunnableListener {
+                override fun onResult(result: Any) {
+                    val currentLatLng = result as LatLng
+
+                    val builder = StringBuilder()
+                    builder.append("https://maps.googleapis.com/maps/api/directions/json?")
+                        .append("origin=" + currentLatLng.latitude + "," + currentLatLng.longitude)
+                        .append("&destination=" + marker.position.latitude + "," + marker.position.longitude)
+                        .append("&mode=walking")
+                        .append("&key=" + getString(R.string.google_maps_key))
+                    val urlString = builder.toString()
+
+                    val runnableListener2 = object : MapsActivity.RunnableListener {
+                        override fun onResult(result: Any) {
+                            val apiDataParser = ApiDataParser()
+                            val path = apiDataParser.parseDirections(result as String)
+                            val polylineOptions = PolylineOptions()
+                            for (i in 0 until path.size) {
+                                polylineOptions.addAll(path[i])
+                            }
+
+                            polyline = mMap.addPolyline(polylineOptions.color(Color.RED))
+                            polylineDrawn = true
+                            polylineDestination = marker
+
+                            val boundsBuilder = LatLngBounds.builder()
+                            boundsBuilder.include(marker.position)
+                                .include(currentLatLng)
+
+                            val bounds = boundsBuilder.build()
+
+                            val width = resources.displayMetrics.widthPixels
+                            val height = resources.displayMetrics.heightPixels
+                            val padding = width * 0.2
+                            mMap.animateCamera(
+                                CameraUpdateFactory.newLatLngBounds(
+                                    bounds,
+                                    width,
+                                    height,
+                                    padding.toInt()
+                                )
+                            )
+
+                            Toast.makeText(
+                                applicationContext,
+                                "Walking directions are in beta. Use caution – This route may be missing sidewalks or pedestrian paths.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                    val apiDataRequest = ApiDataRequest()
+                    apiDataRequest.execute(runnableListener2, urlString, applicationContext)
+                }
+            }
+
+            getCurrentLocation(runnableListener)
+        }
+        return true
     }
 
     @Throws(IOException::class)
@@ -417,6 +510,12 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
             addAlarmButton.isEnabled = false
             addNoteButton.isEnabled = false
             addPhotoButton.isEnabled = false
+
+            if (polylineDrawn) {
+                polyline.remove()
+                polylineDrawn = false
+                polylineDestination = null
+            }
         } else {
             addLocationButton.setImageResource(R.drawable.delete)
             addAlarmButton.setImageResource(R.drawable.add_alarm)

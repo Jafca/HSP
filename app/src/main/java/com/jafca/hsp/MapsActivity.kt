@@ -11,6 +11,7 @@ import android.os.Environment
 import android.os.Handler
 import android.provider.MediaStore
 import android.util.Log
+import android.view.Gravity
 import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
@@ -41,6 +42,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
     var polylineDrawn = false
     private var polylineDestination: Marker? = null
     private lateinit var polyline: Polyline
+    private var fabOpen = false
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var mDb: ParkedLocationDatabase? = null
     private var currentParkedLocation: ParkedLocation? = null
@@ -96,6 +98,14 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
             photoImageView.visibility = View.INVISIBLE
             addPhotoButton.setImageResource(R.drawable.view_photo)
             addPhotoButton.tag = R.drawable.view_photo
+        }
+        menuFab.compatElevation = 16f
+        menuFab.setOnClickListener {
+            if (!fabOpen) {
+                showFABMenu()
+            } else {
+                closeFABMenu()
+            }
         }
 
         model = this.run {
@@ -285,6 +295,28 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
         }
     }
 
+    private fun showFABMenu() {
+        fabOpen = true
+        val fabHeight = menuFab.height.toFloat()
+        val miniFabHeight = parkingFab.height.toFloat()
+        parkingFab.animate().translationY(-fabHeight)
+        historyFab.animate().translationY(-fabHeight - miniFabHeight)
+        settingsFab.animate().translationY(-fabHeight - miniFabHeight * 2)
+        helpFab.animate().translationY(-fabHeight - miniFabHeight * 3)
+        infoFab.animate().translationY(-fabHeight - miniFabHeight * 4)
+        menuFab.setImageResource(R.drawable.close)
+    }
+
+    private fun closeFABMenu() {
+        fabOpen = false
+        parkingFab.animate().translationY(0f)
+        historyFab.animate().translationY(0f)
+        settingsFab.animate().translationY(0f)
+        helpFab.animate().translationY(0f)
+        infoFab.animate().translationY(0f)
+        menuFab.setImageResource(R.drawable.menu)
+    }
+
     private fun showNearbyPlaces(nearbyPlaceList: List<HashMap<String, String>>, currentLatLng: LatLng) {
         Log.i("Distance count", nearbyPlaceList.size.toString())
         Log.i("Distance info", currentLatLng.toString())
@@ -381,11 +413,13 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                                 )
                             )
 
-                            Toast.makeText(
+                            val toast = Toast.makeText(
                                 applicationContext,
                                 "Walking directions are in beta. Use caution – This route may be missing sidewalks or pedestrian paths.",
                                 Toast.LENGTH_LONG
-                            ).show()
+                            )
+                            toast.setGravity(Gravity.BOTTOM, 0, linearLayout.height)
+                            toast.show()
                         }
                     }
                     val apiDataRequest = ApiDataRequest()

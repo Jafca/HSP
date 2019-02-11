@@ -1,12 +1,15 @@
 package com.jafca.hsp
 
+import androidx.lifecycle.LiveData
 import androidx.room.*
 import androidx.room.OnConflictStrategy.REPLACE
 
 @Dao
 interface ParkedLocationDao {
+    @Query("SELECT * FROM parkedLocation ORDER BY datetime DESC")
+    fun getAllLive(): LiveData<List<ParkedLocation>>
 
-    @Query("SELECT * from parkedLocation")
+    @Query("SELECT * FROM parkedLocation")
     fun getAll(): List<ParkedLocation>
 
     @Insert(onConflict = REPLACE)
@@ -18,6 +21,9 @@ interface ParkedLocationDao {
     @Delete
     fun delete(parkedLocation: ParkedLocation)
 
-    @Query("DELETE from parkedLocation")
+    @Query("DELETE FROM parkedLocation")
     fun deleteAll()
+
+    @Query("DELETE FROM parkedLocation WHERE starred = 0")
+    fun deleteNonStarred()
 }

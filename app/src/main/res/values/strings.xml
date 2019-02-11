@@ -5,8 +5,11 @@
     <string name="alarm_button_desc">AlarmButton</string>
     <string name="find_parking_button_desc">FindParkingButton</string>
     <string name="location_button_desc">LocationButton</string>
+    <string name="star_button_desc">StarButton</string>
     <string name="note_placeholder">Enter your note here</string>
     <string name="remove_pin_text">Are you sure you want to remove the pin?</string>
     <string name="parking_show_tag">Show</string>
     <string name="parking_hide_tag">Hide</string>
+    <string name="history_delete_title">Delete</string>
+    <string name="delete_history_text">Are you sure you want to delete all?\nStarred locations will remain</string>
 </resources>

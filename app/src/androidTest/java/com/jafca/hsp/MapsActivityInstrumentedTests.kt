@@ -92,6 +92,8 @@ class MapsActivityInstrumentedTests {
 
     @Test
     fun findParkingButtonInstrumentedTest() {
+        val mDb = ParkedLocationDatabase.getInstance(InstrumentationRegistry.getInstrumentation().targetContext)
+        mDb?.parkedLocationDao()?.deleteAll()
         activityRule.launchActivity(null)
 
         val findParkingButton = Espresso.onView(withId(R.id.findParkingButton))

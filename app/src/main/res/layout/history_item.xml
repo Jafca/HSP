@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:map="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/history_item_layout"
+    android:name="com.google.android.gms.maps.SupportMapFragment"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/locationTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:ellipsize="end"
+        android:paddingEnd="8dp"
+        android:paddingRight="8dp"
+        android:singleLine="true"
+        android:text="History Location"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        map:layout_constraintStart_toStartOf="parent"
+        map:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/distanceDateTimeTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:text="01/01/01 00:00    00.00 km"
+        map:layout_constraintStart_toStartOf="parent"
+        map:layout_constraintTop_toBottomOf="@+id/locationTextView" />
+
+    <ImageView
+        android:id="@+id/editNoteButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:src="@drawable/add_note"
+        map:layout_constraintBottom_toBottomOf="@+id/distanceDateTimeTextView"
+        map:layout_constraintEnd_toStartOf="@+id/starButton"
+        map:layout_constraintTop_toTopOf="@+id/distanceDateTimeTextView"
+        android:contentDescription="@string/note_button_desc" />
+
+    <ImageView
+        android:id="@+id/starButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:src="@drawable/star_border"
+        map:layout_constraintBottom_toBottomOf="@+id/distanceDateTimeTextView"
+        map:layout_constraintEnd_toEndOf="parent"
+        map:layout_constraintTop_toTopOf="@+id/distanceDateTimeTextView"
+        android:contentDescription="@string/star_button_desc" />
+
+    <TextView
+        android:id="@+id/noteTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:ellipsize="end"
+        android:paddingRight="8dp"
+        android:singleLine="true"
+        android:text="History Note"
+        map:layout_constraintStart_toStartOf="parent"
+        map:layout_constraintTop_toBottomOf="@+id/distanceDateTimeTextView" />
+</androidx.constraintlayout.widget.ConstraintLayout>

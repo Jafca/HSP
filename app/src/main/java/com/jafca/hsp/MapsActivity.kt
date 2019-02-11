@@ -99,13 +99,21 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
             addPhotoButton.setImageResource(R.drawable.view_photo)
             addPhotoButton.tag = R.drawable.view_photo
         }
-        menuFab.compatElevation = 16f
+        menuFab.compatElevation = 20f
         menuFab.setOnClickListener {
             if (!fabOpen) {
                 showFABMenu()
             } else {
                 closeFABMenu()
             }
+        }
+        historyFab.setOnClickListener {
+            val runnableListener = object : MapsActivity.RunnableListener {
+                override fun onResult(result: Any) {
+                    startHistoryActivity(result as LatLng)
+                }
+            }
+            getCurrentLocation(runnableListener)
         }
 
         model = this.run {
@@ -128,6 +136,13 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                 NotificationUtils().setNotification(mNotificationTime, this@MapsActivity)
             }
         })
+    }
+
+    private fun startHistoryActivity(latLng: LatLng) {
+        val intent = Intent(this, HistoryActivity::class.java)
+        intent.putExtra("lat", latLng.latitude)
+        intent.putExtra("lon", latLng.longitude)
+        startActivity(intent)
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -168,6 +183,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
     }
 
     private fun fetchParkedLocationDataFromDb(runnableListener: MapsActivity.RunnableListener) {
+        // TODO: If location in shared preferences not found, set it to null
         val task = Runnable {
             val parkedLocations = mDb?.parkedLocationDao()?.getAll()
             mUiHandler.post {
@@ -185,7 +201,14 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                 override fun onResult(result: Any) {
                     val currentLatLng = result as LatLng
                     mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 12f))
-                    insertParkedLocationInDb(ParkedLocation(currentLatLng))
+                    insertParkedLocationInDb(
+                        ParkedLocation(
+                            null,
+                            currentLatLng.latitude,
+                            currentLatLng.longitude,
+                            Date()
+                        )
+                    )
 
                     val markerOptions = MarkerOptions().position(currentLatLng)
                     markerMap[mMap.addMarker(markerOptions)] = CURRENT_PARKING
@@ -332,7 +355,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
 
             val latLng = LatLng(lat, lng)
             markerOptions.position(latLng)
-            markerOptions.title("$placeName : $vicinity")
+            markerOptions.title("$placeName: $vicinity")
             markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN))
 
             markerMap[mMap.addMarker(markerOptions)] = NEARBY_PARKING
@@ -394,6 +417,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                             polyline = mMap.addPolyline(polylineOptions.color(Color.RED))
                             polylineDrawn = true
                             polylineDestination = marker
+                            marker.showInfoWindow()
 
                             val boundsBuilder = LatLngBounds.builder()
                             boundsBuilder.include(marker.position)
@@ -573,6 +597,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
     }
 
     private fun insertParkedLocationInDb(parkedLocation: ParkedLocation) {
+        // TODO: Set shared preferences to this location
         setCurrentParkedLocation(parkedLocation)
         val task = Runnable { mDb?.parkedLocationDao()?.insert(parkedLocation) }
         mDbWorkerThread.postTask(task)
@@ -584,6 +609,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
     }
 
     private fun deleteParkedLocationInDb() {
+        // TODO: Don't delete all, set shared preferences to null
         setCurrentParkedLocation(null)
         val iterator = markerMap.iterator()
         iterator.forEach {

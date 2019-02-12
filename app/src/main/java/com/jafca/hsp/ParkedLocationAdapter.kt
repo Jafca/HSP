@@ -1,6 +1,7 @@
 package com.jafca.hsp
 
 import android.content.Context
+import android.location.Geocoder
 import android.location.Location
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -8,6 +9,7 @@ import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.maps.model.LatLng
+import java.io.IOException
 import java.text.SimpleDateFormat
 
 class ParkedLocationAdapter(
@@ -21,6 +23,7 @@ class ParkedLocationAdapter(
     interface HistoryListener {
         fun update(parkedLocation: ParkedLocation)
         fun delete(parkedLocation: ParkedLocation)
+        fun returnLocation(lat: Double, lon: Double, title: String)
     }
 
     override fun getItemCount(): Int {
@@ -37,7 +40,16 @@ class ParkedLocationAdapter(
 
     override fun onBindViewHolder(holder: ParkedLocationViewHolder, position: Int) {
         holder.location.text = parkedLocations[position].getLatLng().toString()
-        // TODO: Geo-decode LatLng to address
+        try {
+            val geocodeMatches = Geocoder(context).getFromLocation(
+                parkedLocations[position].lat,
+                parkedLocations[position].lon,
+                1
+            )
+            holder.location.text = geocodeMatches[0].getAddressLine(0)
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
 
         var dateString = "N/A"
         val date = parkedLocations[position].datetime
@@ -97,7 +109,13 @@ class ParkedLocationAdapter(
             builder.show()
         }
 
-        // TODO: Send back location on click as activity result and show on map as yellow with a route to it
+        holder.layout.setOnClickListener {
+            historyListener.returnLocation(
+                parkedLocations[position].lat,
+                parkedLocations[position].lon,
+                holder.location.text.toString()
+            )
+        }
     }
 
     fun setData(newData: List<ParkedLocation>) {

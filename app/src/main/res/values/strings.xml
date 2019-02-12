@@ -12,4 +12,5 @@
     <string name="parking_hide_tag">Hide</string>
     <string name="history_delete_title">Delete</string>
     <string name="delete_history_text">Are you sure you want to delete all?\nStarred locations will remain</string>
+    <string name="locationId">locationId</string>
 </resources>

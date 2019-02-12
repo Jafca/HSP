@@ -12,8 +12,11 @@ interface ParkedLocationDao {
     @Query("SELECT * FROM parkedLocation")
     fun getAll(): List<ParkedLocation>
 
+    @Query("SELECT * FROM parkedLocation WHERE id = :id")
+    fun getById(id: Long): ParkedLocation
+
     @Insert(onConflict = REPLACE)
-    fun insert(parkedLocation: ParkedLocation)
+    fun insert(parkedLocation: ParkedLocation): Long
 
     @Update
     fun update(parkedLocation: ParkedLocation)

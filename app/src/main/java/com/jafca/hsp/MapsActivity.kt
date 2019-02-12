@@ -1,9 +1,13 @@
 package com.jafca.hsp
 
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.location.Geocoder
 import android.location.Location
 import android.net.Uri
 import android.os.Bundle
@@ -49,10 +53,12 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
     private lateinit var mDbWorkerThread: DbWorkerThread
     private val mUiHandler = Handler()
     private lateinit var model: SharedViewModel
+    private lateinit var sharedPrefs: SharedPreferences
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
         private const val REQUEST_TAKE_PHOTO = 2
+        private const val REQUEST_HISTORY = 3
         private const val CURRENT_PARKING = 1
         private const val NEARBY_PARKING = 2
     }
@@ -70,14 +76,16 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
+        sharedPrefs = this.getPreferences(Context.MODE_PRIVATE)
+
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         mDbWorkerThread = DbWorkerThread("dbWorkerThread")
         mDbWorkerThread.start()
         mDb = ParkedLocationDatabase.getInstance(this)
 
-        setCurrentParkedLocation(null)
         findParkingButton.tag = R.string.parking_show_tag
+        setStartTags()
 
         addLocationButton.setOnClickListener {
             onAddLocationButtonClick()
@@ -110,6 +118,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
         historyFab.setOnClickListener {
             val runnableListener = object : MapsActivity.RunnableListener {
                 override fun onResult(result: Any) {
+                    closeFABMenu()
                     startHistoryActivity(result as LatLng)
                 }
             }
@@ -139,10 +148,10 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
     }
 
     private fun startHistoryActivity(latLng: LatLng) {
-        val intent = Intent(this, HistoryActivity::class.java)
-        intent.putExtra("lat", latLng.latitude)
-        intent.putExtra("lon", latLng.longitude)
-        startActivity(intent)
+        val historyIntent = Intent(this, HistoryActivity::class.java)
+        historyIntent.putExtra("lat", latLng.latitude)
+        historyIntent.putExtra("lon", latLng.longitude)
+        startActivityForResult(historyIntent, REQUEST_HISTORY)
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -183,16 +192,24 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
     }
 
     private fun fetchParkedLocationDataFromDb(runnableListener: MapsActivity.RunnableListener) {
-        // TODO: If location in shared preferences not found, set it to null
-        val task = Runnable {
-            val parkedLocations = mDb?.parkedLocationDao()?.getAll()
-            mUiHandler.post {
-                if (parkedLocations != null && parkedLocations.isNotEmpty()) {
-                    runnableListener.onResult(parkedLocations.last())
+        // If location in shared preferences not found, set it to -1
+        val locationId = sharedPrefs.getLong(getString(R.string.locationId), -1)
+        if (locationId != -1L) {
+            val task = Runnable {
+                val parkedLocation = mDb?.parkedLocationDao()?.getById(locationId)
+                mUiHandler.post {
+                    if (parkedLocation != null) {
+                        runnableListener.onResult(parkedLocation)
+                    } else {
+                        with(sharedPrefs.edit()) {
+                            putLong(getString(R.string.locationId), -1)
+                            apply()
+                        }
+                    }
                 }
             }
+            mDbWorkerThread.postTask(task)
         }
-        mDbWorkerThread.postTask(task)
     }
 
     private fun onAddLocationButtonClick() {
@@ -211,6 +228,19 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                     )
 
                     val markerOptions = MarkerOptions().position(currentLatLng)
+                    markerOptions.title(currentLatLng.toString())
+
+                    try {
+                        val geocodeMatches = Geocoder(this@MapsActivity).getFromLocation(
+                            currentLatLng.latitude,
+                            currentLatLng.longitude,
+                            1
+                        )
+                        markerOptions.title(geocodeMatches[0].getAddressLine(0))
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                    }
+
                     markerMap[mMap.addMarker(markerOptions)] = CURRENT_PARKING
                 }
             }
@@ -224,7 +254,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
             builder.setPositiveButton("YES") { _, _ ->
                 val file = getPhoto()
                 file.delete()
-                deleteParkedLocationInDb()
+                removeParkedLocation()
                 NotificationUtils().cancelAlarms(this@MapsActivity)
             }
 
@@ -502,6 +532,28 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                     addPhotoButton.tag = R.drawable.add_photo
                 }
             }
+            REQUEST_HISTORY -> {
+                if (resultCode == Activity.RESULT_OK) {
+                    val lat = data!!.getDoubleExtra("lat", 1.0)
+                    val lon = data.getDoubleExtra("lon", 1.0)
+                    val latLng = LatLng(lat, lon)
+
+                    if (currentParkedLocation?.getLatLng() != latLng) {
+                        val markerOptions = MarkerOptions()
+                        markerOptions.position(latLng)
+                        markerOptions.title(data.getStringExtra("title"))
+                        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW))
+                        markerMap[mMap.addMarker(markerOptions)] = NEARBY_PARKING
+                    }
+
+                    mMap.animateCamera(
+                        CameraUpdateFactory.newLatLngZoom(
+                            latLng,
+                            12f
+                        )
+                    )
+                }
+            }
         }
     }
 
@@ -555,15 +607,17 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
         currentParkedLocation = parkedLocation
         photoImageView.visibility = View.INVISIBLE
         if (parkedLocation == null) {
+            with(sharedPrefs.edit()) {
+                putLong(getString(R.string.locationId), -1)
+                apply()
+            }
+
             addLocationButton.setImageResource(R.drawable.pin_drop)
             addAlarmButton.setImageResource(R.drawable.add_alarm_grey)
             addNoteButton.setImageResource(R.drawable.add_note_grey)
             addPhotoButton.setImageResource(R.drawable.add_photo_grey)
 
-            addLocationButton.tag = R.drawable.pin_drop
-            addAlarmButton.tag = R.drawable.add_alarm_grey
-            addNoteButton.tag = R.drawable.add_note_grey
-            addPhotoButton.tag = R.drawable.add_photo_grey
+            setStartTags()
 
             addAlarmButton.isEnabled = false
             addNoteButton.isEnabled = false
@@ -575,10 +629,10 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                 polylineDestination = null
             }
         } else {
-            addLocationButton.setImageResource(R.drawable.delete)
+            addLocationButton.setImageResource(R.drawable.done)
             addAlarmButton.setImageResource(R.drawable.add_alarm)
             addNoteButton.setImageResource(R.drawable.add_note)
-            addLocationButton.tag = R.drawable.delete
+            addLocationButton.tag = R.drawable.done
             addAlarmButton.tag = R.drawable.add_alarm
             addNoteButton.tag = R.drawable.add_note
 
@@ -596,10 +650,22 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
         }
     }
 
+    private fun setStartTags() {
+        addLocationButton.tag = R.drawable.pin_drop
+        addAlarmButton.tag = R.drawable.add_alarm_grey
+        addNoteButton.tag = R.drawable.add_note_grey
+        addPhotoButton.tag = R.drawable.add_photo_grey
+    }
+
     private fun insertParkedLocationInDb(parkedLocation: ParkedLocation) {
-        // TODO: Set shared preferences to this location
         setCurrentParkedLocation(parkedLocation)
-        val task = Runnable { mDb?.parkedLocationDao()?.insert(parkedLocation) }
+        val task = Runnable {
+            val locationId = mDb?.parkedLocationDao()?.insert(parkedLocation)
+            with(sharedPrefs.edit()) {
+                putLong(getString(R.string.locationId), locationId!!)
+                apply()
+            }
+        }
         mDbWorkerThread.postTask(task)
     }
 
@@ -608,8 +674,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
         mDbWorkerThread.postTask(task)
     }
 
-    private fun deleteParkedLocationInDb() {
-        // TODO: Don't delete all, set shared preferences to null
+    private fun removeParkedLocation() {
         setCurrentParkedLocation(null)
         val iterator = markerMap.iterator()
         iterator.forEach {
@@ -618,9 +683,6 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                 iterator.remove()
             }
         }
-
-        val task = Runnable { mDb?.parkedLocationDao()?.deleteAll() }
-        mDbWorkerThread.postTask(task)
     }
 
     override fun onDestroy() {

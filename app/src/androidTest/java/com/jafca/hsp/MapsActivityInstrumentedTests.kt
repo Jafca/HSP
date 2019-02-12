@@ -65,27 +65,27 @@ class MapsActivityInstrumentedTests {
         addLocationButton.check(matches(withTagValue(equalTo(R.drawable.pin_drop))))
         addLocationButton.perform(click())
 
-        val listWithOneLocation = mDb?.parkedLocationDao()?.getAll()
-        assertTrue(listWithOneLocation != null && listWithOneLocation.isNotEmpty())
+        var locationsList = mDb?.parkedLocationDao()?.getAll()
+        assertTrue(locationsList != null && locationsList.isNotEmpty())
         assertEquals(1, activityRule.activity.markerMap.size)
-        addLocationButton.check(matches(withTagValue(equalTo(R.drawable.delete))))
+        addLocationButton.check(matches(withTagValue(equalTo(R.drawable.done))))
 
         addLocationButton.perform(click())
 
         onView(withText(R.string.remove_pin_text)).check(matches(isDisplayed()))
         // Select CANCEL
         onView(withId(android.R.id.button2)).perform(click())
-        val listWithStillOneLocation = mDb?.parkedLocationDao()?.getAll()
-        assertTrue(listWithStillOneLocation != null && listWithStillOneLocation.isNotEmpty())
-        addLocationButton.check(matches(withTagValue(equalTo(R.drawable.delete))))
+        locationsList = mDb?.parkedLocationDao()?.getAll()
+        assertTrue(locationsList != null && locationsList.isNotEmpty())
+        addLocationButton.check(matches(withTagValue(equalTo(R.drawable.done))))
 
         addLocationButton.perform(click())
 
         onView(withText(R.string.remove_pin_text)).check(matches(isDisplayed()))
         // Select YES
         onView(withId(android.R.id.button1)).perform(click())
-        val listWithNoLocations = mDb?.parkedLocationDao()?.getAll()
-        assertTrue(listWithNoLocations != null && listWithNoLocations.isEmpty())
+        locationsList = mDb?.parkedLocationDao()?.getAll()
+        assertTrue(locationsList != null && locationsList.isNotEmpty())
         assertEquals(true, activityRule.activity.markerMap.isEmpty())
         addLocationButton.check(matches(withTagValue(equalTo(R.drawable.pin_drop))))
     }

@@ -1,5 +1,7 @@
 package com.jafca.hsp
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
@@ -111,6 +113,15 @@ class HistoryActivity : AppCompatActivity(), ParkedLocationAdapter.HistoryListen
 
     override fun delete(parkedLocation: ParkedLocation) {
         postViewModel.deleteParkedLocation(parkedLocation)
+    }
+
+    override fun returnLocation(lat: Double, lon: Double, title: String) {
+        val data = Intent()
+        data.putExtra("lat", lat)
+        data.putExtra("lon", lon)
+        data.putExtra("title", title)
+        setResult(Activity.RESULT_OK, data)
+        finish()
     }
 
     override fun onDestroy() {

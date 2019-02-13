@@ -1,9 +1,9 @@
 <resources>
     <string name="app_name">HSP</string>
+    <string name="share_button_desc">ShareButton</string>
     <string name="photo_button_desc">PhotoButton</string>
     <string name="note_button_desc">NoteButton</string>
     <string name="alarm_button_desc">AlarmButton</string>
-    <string name="find_parking_button_desc">FindParkingButton</string>
     <string name="location_button_desc">LocationButton</string>
     <string name="star_button_desc">StarButton</string>
     <string name="note_placeholder">Enter your note here</string>

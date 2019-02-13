@@ -84,14 +84,18 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
         mDbWorkerThread.start()
         mDb = ParkedLocationDatabase.getInstance(this)
 
-        findParkingButton.tag = R.string.parking_show_tag
+        parkingFab.tag = R.string.parking_show_tag
         setStartTags()
 
+        shareButton.setOnClickListener {
+            onShareButtonClick()
+        }
         addLocationButton.setOnClickListener {
             onAddLocationButtonClick()
         }
-        findParkingButton.setOnClickListener {
-            onFindParkingButtonClick()
+        parkingFab.setOnClickListener {
+            onParkingFabClick()
+            closeFABMenu()
         }
         addAlarmButton.setOnClickListener {
             onAddAlarmButtonClick()
@@ -212,6 +216,20 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
         }
     }
 
+    private fun onShareButtonClick() {
+        val builder = StringBuilder()
+        builder.append("I've parked here: ")
+            .append("https://www.google.com/maps/search/?api=1&query=")
+            .append(currentParkedLocation?.lat.toString() + ",")
+            .append(currentParkedLocation?.lon.toString())
+        val url = builder.toString()
+
+        val sharingIntent = Intent(android.content.Intent.ACTION_SEND)
+        sharingIntent.type = "text/html"
+        sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, url)
+        startActivity(Intent.createChooser(sharingIntent, "Send to"))
+    }
+
     private fun onAddLocationButtonClick() {
         if (currentParkedLocation == null) {
             val runnableListener = object : MapsActivity.RunnableListener {
@@ -265,9 +283,9 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
         }
     }
 
-    private fun onFindParkingButtonClick() {
-        if (findParkingButton.tag == R.string.parking_hide_tag) {
-            findParkingButton.tag = R.string.parking_show_tag
+    private fun onParkingFabClick() {
+        if (parkingFab.tag == R.string.parking_hide_tag) {
+            parkingFab.tag = R.string.parking_show_tag
 
             val iterator = markerMap.iterator()
             iterator.forEach {
@@ -305,7 +323,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                     }
                     val apiDataRequest = ApiDataRequest()
                     apiDataRequest.execute(runnableListener2, url, applicationContext)
-                    findParkingButton.tag = R.string.parking_hide_tag
+                    parkingFab.tag = R.string.parking_hide_tag
                 }
             }
 
@@ -616,12 +634,9 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
             addAlarmButton.setImageResource(R.drawable.add_alarm_grey)
             addNoteButton.setImageResource(R.drawable.add_note_grey)
             addPhotoButton.setImageResource(R.drawable.add_photo_grey)
+            shareButton.setImageResource(R.drawable.share_grey)
 
             setStartTags()
-
-            addAlarmButton.isEnabled = false
-            addNoteButton.isEnabled = false
-            addPhotoButton.isEnabled = false
 
             if (polylineDrawn) {
                 polyline.remove()
@@ -632,9 +647,11 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
             addLocationButton.setImageResource(R.drawable.done)
             addAlarmButton.setImageResource(R.drawable.add_alarm)
             addNoteButton.setImageResource(R.drawable.add_note)
+            shareButton.setImageResource(R.drawable.share)
             addLocationButton.tag = R.drawable.done
             addAlarmButton.tag = R.drawable.add_alarm
             addNoteButton.tag = R.drawable.add_note
+            shareButton.tag = R.drawable.share
 
             if (getPhoto().exists()) {
                 addPhotoButton.setImageResource(R.drawable.view_photo)
@@ -647,6 +664,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
             addAlarmButton.isEnabled = true
             addNoteButton.isEnabled = true
             addPhotoButton.isEnabled = true
+            shareButton.isEnabled = true
         }
     }
 
@@ -655,6 +673,12 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
         addAlarmButton.tag = R.drawable.add_alarm_grey
         addNoteButton.tag = R.drawable.add_note_grey
         addPhotoButton.tag = R.drawable.add_photo_grey
+        shareButton.tag = R.drawable.share_grey
+
+        addAlarmButton.isEnabled = false
+        addNoteButton.isEnabled = false
+        addPhotoButton.isEnabled = false
+        shareButton.isEnabled = false
     }
 
     private fun insertParkedLocationInDb(parkedLocation: ParkedLocation) {

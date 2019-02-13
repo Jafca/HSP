@@ -33,7 +33,7 @@ class MapsActivityInstrumentedTests {
         button.check(matches(isEnabled()))
         button.check(matches(withTagValue(equalTo(R.drawable.pin_drop))))
 
-        button = Espresso.onView(withId(R.id.findParkingButton))
+        button = Espresso.onView(withId(R.id.parkingFab))
         button.check(matches(isDisplayed()))
         button.check(matches(isEnabled()))
         button.check(matches(withTagValue(equalTo(R.string.parking_show_tag))))
@@ -91,21 +91,24 @@ class MapsActivityInstrumentedTests {
     }
 
     @Test
-    fun findParkingButtonInstrumentedTest() {
+    fun parkingFabInstrumentedTest() {
         val mDb = ParkedLocationDatabase.getInstance(InstrumentationRegistry.getInstrumentation().targetContext)
         mDb?.parkedLocationDao()?.deleteAll()
         activityRule.launchActivity(null)
 
-        val findParkingButton = Espresso.onView(withId(R.id.findParkingButton))
-        findParkingButton.perform(click())
+        Espresso.onView(withId(R.id.menuFab)).perform(click())
+
+        val parkingFab = Espresso.onView(withId(R.id.parkingFab))
+        parkingFab.perform(click())
 
         assertEquals(true, activityRule.activity.markerMap.isNotEmpty())
-        findParkingButton.check(matches(withTagValue(equalTo(R.string.parking_hide_tag))))
+        parkingFab.check(matches(withTagValue(equalTo(R.string.parking_hide_tag))))
 
-        findParkingButton.perform(click())
+        Espresso.onView(withId(R.id.menuFab)).perform(click())
+        parkingFab.perform(click())
 
         assertEquals(true, activityRule.activity.markerMap.isEmpty())
-        findParkingButton.check(matches(withTagValue(equalTo(R.string.parking_show_tag))))
+        parkingFab.check(matches(withTagValue(equalTo(R.string.parking_show_tag))))
     }
 
     @Test

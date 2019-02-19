@@ -54,6 +54,9 @@
         <receiver
             android:name=".AlarmReceiver"
             android:enabled="true" />
+        <receiver
+            android:name=".CheckerReceiver"
+            android:enabled="true" />
 
         <service
             android:name=".NotificationService"

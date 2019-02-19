@@ -146,7 +146,12 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                     }
                 }
                 val mNotificationTime = calendar.timeInMillis
-                NotificationUtils().setNotification(mNotificationTime, this@MapsActivity)
+                NotificationUtils().setNotification(
+                    applicationContext,
+                    mNotificationTime,
+                    currentParkedLocation!!.lat,
+                    currentParkedLocation!!.lon
+                )
             }
         })
     }
@@ -273,7 +278,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                 val file = getPhoto()
                 file.delete()
                 removeParkedLocation()
-                NotificationUtils().cancelAlarms(this@MapsActivity)
+                NotificationUtils().cancelAlarms(applicationContext)
             }
 
             builder.setNegativeButton("CANCEL") { _, _ -> }
@@ -610,8 +615,6 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
             )
             return
         }
-
-        mMap.isMyLocationEnabled = true
 
         fusedLocationClient.lastLocation.addOnSuccessListener(this) { location ->
             if (location != null) {

@@ -32,7 +32,7 @@ class NotificationUtils {
             val checkerIntent = Intent(context.applicationContext, CheckerReceiver::class.java)
             alarmManager.setInexactRepeating(
                 AlarmManager.ELAPSED_REALTIME,
-                SystemClock.elapsedRealtime() + 1000,
+                SystemClock.elapsedRealtime(),
                 5 * 60 * 1000, // 5 minutes
                 PendingIntent.getBroadcast(context, 1, checkerIntent, 0)
             )

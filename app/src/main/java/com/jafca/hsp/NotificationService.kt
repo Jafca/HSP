@@ -12,6 +12,7 @@ import android.graphics.Color
 import android.location.Location
 import android.media.RingtoneManager
 import android.os.Build
+import android.preference.PreferenceManager
 import androidx.core.app.JobIntentService
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.LatLng
@@ -58,7 +59,7 @@ class NotificationService : JobIntentService() {
             if (timestamp > 0) {
                 if (intent.extras!!.getString("reason") == "notification") {
                     sendNotification("Parking Time Limit", "Your time limit is about to expire")
-                } else {
+                } else if (PreferenceManager.getDefaultSharedPreferences(applicationContext).getBoolean(getString(R.string.pref_smart), true)){
                     val runnableListener = object : MapsActivity.RunnableListener {
                         override fun onResult(result: Any) {
                             val currentLatLng = result as LatLng

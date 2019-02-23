@@ -10,7 +10,10 @@
     <string name="remove_pin_text">Are you sure you want to remove the pin?</string>
     <string name="parking_show_tag">Show</string>
     <string name="parking_hide_tag">Hide</string>
-    <string name="history_delete_title">Delete</string>
+    <string name="delete_title">Delete</string>
     <string name="delete_history_text">Are you sure you want to delete all?\nStarred locations will remain</string>
-    <string name="locationId">locationId</string>
+    <string name="reset_title">Reset</string>
+    <string name="reset_settings_text">Are you sure you want to reset to default settings?</string>
+    <string name="pref_locationId">locationId</string>
+    <string name="pref_smart">smart</string>
 </resources>

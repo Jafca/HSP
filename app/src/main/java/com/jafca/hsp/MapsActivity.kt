@@ -1,5 +1,6 @@
 package com.jafca.hsp
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -87,15 +88,8 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
         parkingFab.tag = R.string.parking_show_tag
         setStartTags()
 
-        shareButton.setOnClickListener {
-            onShareButtonClick()
-        }
         addLocationButton.setOnClickListener {
             onAddLocationButtonClick()
-        }
-        parkingFab.setOnClickListener {
-            onParkingFabClick()
-            closeFABMenu()
         }
         addAlarmButton.setOnClickListener {
             onAddAlarmButtonClick()
@@ -111,6 +105,10 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
             addPhotoButton.setImageResource(R.drawable.view_photo)
             addPhotoButton.tag = R.drawable.view_photo
         }
+        shareButton.setOnClickListener {
+            onShareButtonClick()
+        }
+
         menuFab.compatElevation = 20f
         menuFab.setOnClickListener {
             if (!fabOpen) {
@@ -118,6 +116,10 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
             } else {
                 closeFABMenu()
             }
+        }
+        parkingFab.setOnClickListener {
+            onParkingFabClick()
+            closeFABMenu()
         }
         historyFab.setOnClickListener {
             val runnableListener = object : MapsActivity.RunnableListener {
@@ -127,6 +129,16 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                 }
             }
             getCurrentLocation(runnableListener)
+        }
+        settingsFab.setOnClickListener {
+            closeFABMenu()
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
+        helpFab.setOnClickListener {
+
+        }
+        infoFab.setOnClickListener {
+
         }
 
         model = this.run {
@@ -200,9 +212,18 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
         mMap.isMyLocationEnabled = true
     }
 
+    @SuppressLint("MissingPermission")
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                mMap.isMyLocationEnabled = true
+            }
+        }
+    }
+
     private fun fetchParkedLocationDataFromDb(runnableListener: MapsActivity.RunnableListener) {
         // If location in shared preferences not found, set it to -1
-        val locationId = sharedPrefs.getLong(getString(R.string.locationId), -1)
+        val locationId = sharedPrefs.getLong(getString(R.string.pref_locationId), -1)
         if (locationId != -1L) {
             val task = Runnable {
                 val parkedLocation = mDb?.parkedLocationDao()?.getById(locationId)
@@ -211,7 +232,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                         runnableListener.onResult(parkedLocation)
                     } else {
                         with(sharedPrefs.edit()) {
-                            putLong(getString(R.string.locationId), -1)
+                            putLong(getString(R.string.pref_locationId), -1)
                             apply()
                         }
                     }
@@ -629,7 +650,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
         photoImageView.visibility = View.INVISIBLE
         if (parkedLocation == null) {
             with(sharedPrefs.edit()) {
-                putLong(getString(R.string.locationId), -1)
+                putLong(getString(R.string.pref_locationId), -1)
                 apply()
             }
 
@@ -689,7 +710,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
         val task = Runnable {
             val locationId = mDb?.parkedLocationDao()?.insert(parkedLocation)
             with(sharedPrefs.edit()) {
-                putLong(getString(R.string.locationId), locationId!!)
+                putLong(getString(R.string.pref_locationId), locationId!!)
                 apply()
             }
         }

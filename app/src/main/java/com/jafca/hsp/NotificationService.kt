@@ -57,9 +57,10 @@ class NotificationService : JobIntentService() {
         if (intent.extras != null) {
             val timestamp = intent.extras!!.getLong("timestamp")
             if (timestamp > 0) {
+                val defPrefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
                 if (intent.extras!!.getString("reason") == "notification") {
                     sendNotification("Parking Time Limit", "Your time limit is about to expire")
-                } else if (PreferenceManager.getDefaultSharedPreferences(applicationContext).getBoolean(getString(R.string.pref_smart), true)){
+                } else if (defPrefs.getBoolean(getString(R.string.pref_smart), true)){
                     val runnableListener = object : MapsActivity.RunnableListener {
                         override fun onResult(result: Any) {
                             val currentLatLng = result as LatLng
@@ -75,7 +76,10 @@ class NotificationService : JobIntentService() {
                                 distance
                             )
                             distance[0] = distance[0] / 1000
-                            val walkingSpeed = 5 // kph
+                            val savedSpeed= defPrefs.getString(getString(R.string.pref_speed), "")
+                            val walkingSpeed = savedSpeed.toFloatOrNull() ?: 5f
+
+                            // TODO: Calculate length of Directions API data, add to settings (e.g. Use Sample Data switch)
 
                             val time = (distance[0] / walkingSpeed) * 60 * 60 * 1000 // milliseconds
                             val currentTime = Calendar.getInstance().timeInMillis

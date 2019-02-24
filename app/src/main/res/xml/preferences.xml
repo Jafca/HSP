@@ -1,10 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <SwitchPreference
-        android:id="@+id/smartSwitch"
-        android:defaultValue="true"
-        android:key="@string/pref_smart"
-        android:summaryOff="Smart Reminders are disabled"
-        android:summaryOn="Smart Reminders are enabled"
-        android:title="Smart Reminders" />
+    <PreferenceCategory android:title="General">
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="@string/pref_smart"
+            android:summaryOff="Smart Reminders are disabled"
+            android:summaryOn="Smart Reminders are enabled"
+            android:title="Smart Reminders" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Walking Speed (currently 5 kph)">
+        <Preference
+            android:key="pref_calcSpeed"
+            android:title="Click here while walking to calculate your speed" />
+        <EditTextPreference
+            android:defaultValue="5"
+            android:key="@string/pref_speed"
+            android:title="Enter speed (kph) manually" />
+    </PreferenceCategory>
 </PreferenceScreen>

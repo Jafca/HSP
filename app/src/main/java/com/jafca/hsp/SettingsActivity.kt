@@ -28,7 +28,11 @@ class SettingsActivity : AppCompatActivity() {
             builder.setMessage(getString(R.string.reset_settings_text))
 
             builder.setPositiveButton("YES") { _, _ ->
-                PreferenceManager.getDefaultSharedPreferences(applicationContext).edit().remove("smart").apply()
+                PreferenceManager.getDefaultSharedPreferences(applicationContext)
+                    .edit()
+                    .remove(getString(R.string.pref_smart))
+                    .remove(getString(R.string.pref_speed))
+                    .apply()
             }
             builder.setNegativeButton("CANCEL") { _, _ -> }
 

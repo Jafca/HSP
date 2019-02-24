@@ -23,6 +23,7 @@ import kotlinx.android.synthetic.main.activity_history.*
 class HistoryActivity : AppCompatActivity(), ParkedLocationAdapter.HistoryListener {
     private var mDb: ParkedLocationDatabase? = null
     private lateinit var handler: Handler
+    private lateinit var handlerThread: HandlerThread
     private val mUiHandler = Handler()
     private lateinit var postViewModel: ParkedLocationViewModel
 
@@ -33,7 +34,7 @@ class HistoryActivity : AppCompatActivity(), ParkedLocationAdapter.HistoryListen
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         mDb = ParkedLocationDatabase.getInstance(this)
-        val handlerThread = HandlerThread("DbHistoryThread")
+        handlerThread = HandlerThread("DbHistoryThread")
         handlerThread.start()
         val looper = handlerThread.looper
         handler = Handler(looper)
@@ -126,6 +127,7 @@ class HistoryActivity : AppCompatActivity(), ParkedLocationAdapter.HistoryListen
 
     override fun onDestroy() {
         ParkedLocationDatabase.destroyInstance()
+        handlerThread.quit()
         super.onDestroy()
     }
 }

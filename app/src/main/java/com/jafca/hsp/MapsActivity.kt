@@ -2,7 +2,6 @@ package com.jafca.hsp
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
@@ -14,6 +13,8 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
+import android.os.HandlerThread
+import android.preference.PreferenceManager
 import android.provider.MediaStore
 import android.util.Log
 import android.view.Gravity
@@ -51,7 +52,8 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var mDb: ParkedLocationDatabase? = null
     private var currentParkedLocation: ParkedLocation? = null
-    private lateinit var mDbWorkerThread: DbWorkerThread
+    private lateinit var dbHandler: Handler
+    private lateinit var handlerThread: HandlerThread
     private val mUiHandler = Handler()
     private lateinit var model: SharedViewModel
     private lateinit var sharedPrefs: SharedPreferences
@@ -77,13 +79,15 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        sharedPrefs = this.getPreferences(Context.MODE_PRIVATE)
+        sharedPrefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        mDbWorkerThread = DbWorkerThread("dbWorkerThread")
-        mDbWorkerThread.start()
         mDb = ParkedLocationDatabase.getInstance(this)
+        handlerThread = HandlerThread("DbThread")
+        handlerThread.start()
+        val looper = handlerThread.looper
+        dbHandler = Handler(looper)
 
         parkingFab.tag = R.string.parking_show_tag
         setStartTags()
@@ -238,7 +242,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                     }
                 }
             }
-            mDbWorkerThread.postTask(task)
+            dbHandler.post(task)
         }
     }
 
@@ -714,12 +718,12 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                 apply()
             }
         }
-        mDbWorkerThread.postTask(task)
+        dbHandler.post(task)
     }
 
     private fun updateParkedLocationInDb(parkedLocation: ParkedLocation) {
         val task = Runnable { mDb?.parkedLocationDao()?.update(parkedLocation) }
-        mDbWorkerThread.postTask(task)
+        dbHandler.post(task)
     }
 
     private fun removeParkedLocation() {
@@ -735,7 +739,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
 
     override fun onDestroy() {
         ParkedLocationDatabase.destroyInstance()
-        mDbWorkerThread.quit()
+        handlerThread.quit()
         super.onDestroy()
     }
 }

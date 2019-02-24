@@ -1,11 +1,16 @@
 package com.jafca.hsp
 
+import android.annotation.SuppressLint
 import android.content.SharedPreferences
+import android.location.Location
 import android.os.Bundle
-import androidx.preference.Preference
-import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.PreferenceManager
-import androidx.preference.SwitchPreference
+import android.text.InputType
+import android.text.method.PasswordTransformationMethod
+import android.view.View
+import androidx.preference.*
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.tasks.OnSuccessListener
+import java.util.concurrent.Executors
 
 class SettingsFragment : PreferenceFragmentCompat() {
     private inner class NumericKeyboardMethod : PasswordTransformationMethod() {
@@ -16,12 +21,26 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     private var listener: SharedPreferences.OnSharedPreferenceChangeListener =
         SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
-            if (key == "smart") {
-                val switchPreference = findPreference<Preference>("smart") as SwitchPreference
-                switchPreference.isChecked = prefs.getBoolean("smart", true)
+            if (key == getString(R.string.pref_smart)) {
+                val switchPreference = findPreference<Preference>(getString(R.string.pref_smart)) as SwitchPreference
+                switchPreference.isChecked = prefs.getBoolean(getString(R.string.pref_smart), true)
+            } else if (key == getString(R.string.pref_speed)) {
+                var speed = prefs.getString(getString(R.string.pref_speed), "")
+                if (speed.toFloatOrNull() == null) {
+                    speed = "5"
+                } else if (speed.toFloat() < 0.1f) {
+                    speed = "0.1"
+                }
+                prefs.edit().putString(getString(R.string.pref_speed), speed).apply()
+
+                val speedEditTextPreference =
+                    findPreference<Preference>(getString(R.string.pref_speed)) as EditTextPreference
+                speedEditTextPreference.text = speed
+                speedEditTextPreference.parent?.title = "Walking Speed (currently $speed kph)"
             }
         }
 
+    @SuppressLint("MissingPermission")
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         addPreferencesFromResource(R.xml.preferences)
         val defPrefs = PreferenceManager.getDefaultSharedPreferences(this.activity!!.applicationContext)

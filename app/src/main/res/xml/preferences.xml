@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="General">
+    <PreferenceCategory
+        android:summary="Walking speed = 5 kph"
+        android:title="Smart Reminders">
         <SwitchPreference
             android:defaultValue="true"
             android:key="@string/pref_smart"
             android:summaryOff="Smart Reminders are disabled"
             android:summaryOn="Smart Reminders are enabled"
-            android:title="Smart Reminders" />
-    </PreferenceCategory>
-    <PreferenceCategory android:title="Walking Speed (currently 5 kph)">
+            android:title="Notifications" />
         <Preference
             android:key="pref_calcSpeed"
             android:title="Click here while walking to calculate your speed" />
@@ -16,5 +16,19 @@
             android:defaultValue="5"
             android:key="@string/pref_speed"
             android:title="Enter speed (kph) manually" />
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="@string/pref_directDistance"
+            android:summaryOff="Calculates the actual length of the walking path"
+            android:summaryOn="Calculates length of direct path between the two locations"
+            android:title="Use Direct Distance" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Developer Options">
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="@string/pref_sampleData"
+            android:summaryOff="Sends requests to API"
+            android:summaryOn="Uses stored API responses"
+            android:title="Use Sample Data" />
     </PreferenceCategory>
 </PreferenceScreen>

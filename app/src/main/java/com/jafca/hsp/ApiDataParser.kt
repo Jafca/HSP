@@ -65,6 +65,17 @@ class ApiDataParser {
         return googlePlacesMap
     }
 
+    internal fun parseDirectionsDistance(jsonData: String): Float {
+        val jsonResponse = JSONObject(jsonData)
+        val routes = jsonResponse.getJSONArray("routes")
+        val legs = routes.getJSONObject(0).getJSONArray("legs")
+        var length = 0f
+        for (i in 0 until legs.length()) {
+            length += legs.getJSONObject(i).getJSONObject("distance").getString("value").toFloat()
+        }
+        return length
+    }
+
     internal fun parseDirections(jsonData: String): MutableList<List<LatLng>> {
         val jsonResponse = JSONObject(jsonData)
         val routes = jsonResponse.getJSONArray("routes")
@@ -89,7 +100,7 @@ class ApiDataParser {
             var shift = 0
             var result = 0
             do {
-                b = encoded.get(index++).toInt() - 63
+                b = encoded[index++].toInt() - 63
                 result = result or ((b and 0x1f) shl shift)
                 shift += 5
             } while (b >= 0x20)
@@ -98,7 +109,7 @@ class ApiDataParser {
             shift = 0
             result = 0
             do {
-                b = encoded.get(index++).toInt() - 63
+                b = encoded[index++].toInt() - 63
                 result = result or ((b and 0x1f) shl shift)
                 shift += 5
             } while (b >= 0x20)

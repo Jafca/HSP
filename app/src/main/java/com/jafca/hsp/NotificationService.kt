@@ -60,33 +60,36 @@ class NotificationService : JobIntentService() {
                 val defPrefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
                 if (intent.extras!!.getString("reason") == "notification") {
                     sendNotification("Parking Time Limit", "Your time limit is about to expire")
-                } else if (defPrefs.getBoolean(getString(R.string.pref_smart), true)){
+                } else if (defPrefs.getBoolean(getString(R.string.pref_smart), true)) {
                     val runnableListener = object : MapsActivity.RunnableListener {
                         override fun onResult(result: Any) {
                             val currentLatLng = result as LatLng
                             val lat = intent.extras!!.getDouble("lat")
                             val lon = intent.extras!!.getDouble("lon")
 
-                            val distance = FloatArray(1)
-                            Location.distanceBetween(
-                                currentLatLng.latitude,
-                                currentLatLng.longitude,
-                                lat,
-                                lon,
-                                distance
-                            )
-                            distance[0] = distance[0] / 1000
-                            val savedSpeed= defPrefs.getString(getString(R.string.pref_speed), "")
+                            val savedSpeed = defPrefs.getString(getString(R.string.pref_speed), "")
                             val walkingSpeed = savedSpeed.toFloatOrNull() ?: 5f
 
-                            // TODO: Calculate length of Directions API data, add to settings (e.g. Use Sample Data switch)
-
-                            val time = (distance[0] / walkingSpeed) * 60 * 60 * 1000 // milliseconds
-                            val currentTime = Calendar.getInstance().timeInMillis
-                            if (currentTime + time > timestamp) {
-                                val message =
-                                    "You have ${"%.2f".format(distance[0])}km to walk before your time limit expires"
-                                sendNotification("Parking Time Limit", message)
+                            var distance: Float
+                            if (defPrefs.getBoolean(getString(R.string.pref_directDistance), true)) {
+                                val directDistance = FloatArray(1)
+                                Location.distanceBetween(
+                                    currentLatLng.latitude,
+                                    currentLatLng.longitude,
+                                    lat,
+                                    lon,
+                                    directDistance
+                                )
+                                distance = directDistance[0] / 1000
+                                sendDistanceNotification(distance, walkingSpeed, timestamp)
+                            } else {
+                                val runnableListener2 = object : MapsActivity.RunnableListener {
+                                    override fun onResult(result: Any) {
+                                        distance = result as Float
+                                        sendDistanceNotification(distance, walkingSpeed, timestamp)
+                                    }
+                                }
+                                getRouteLength(currentLatLng, lat, lon, runnableListener2)
                             }
                         }
                     }
@@ -102,6 +105,16 @@ class NotificationService : JobIntentService() {
                         })
                 }
             }
+        }
+    }
+
+    private fun sendDistanceNotification(distance: Float, walkingSpeed: Float, timestamp: Long) {
+        val time = (distance / walkingSpeed) * 60 * 60 * 1000 // milliseconds
+        val currentTime = Calendar.getInstance().timeInMillis
+        if (currentTime + time > timestamp) {
+            val message =
+                "You have ${"%.2f".format(distance)}km to walk before your time limit expires"
+            sendNotification("Parking Time Limit", message)
         }
     }
 
@@ -148,5 +161,28 @@ class NotificationService : JobIntentService() {
 
         // mNotificationId must be a unique int for each notification
         notificationManager.notify(mNotificationId, mNotification)
+    }
+
+    fun getRouteLength(
+        currentLatLng: LatLng, parkedLat: Double, parkedLng: Double,
+        runnableListener: MapsActivity.RunnableListener
+    ) {
+        val builder = StringBuilder()
+        builder.append("https://maps.googleapis.com/maps/api/directions/json?")
+            .append("origin=" + currentLatLng.latitude + "," + currentLatLng.longitude)
+            .append("&destination=$parkedLat,$parkedLng")
+            .append("&mode=walking")
+            .append("&key=" + getString(R.string.google_maps_key))
+        val urlString = builder.toString()
+
+        val runnableListener2 = object : MapsActivity.RunnableListener {
+            override fun onResult(result: Any) {
+                val apiDataParser = ApiDataParser()
+                val pathLength = apiDataParser.parseDirectionsDistance(result as String)
+                runnableListener.onResult(pathLength / 1000)
+            }
+        }
+        val apiDataRequest = ApiDataRequest()
+        apiDataRequest.execute(runnableListener2, urlString, applicationContext)
     }
 }

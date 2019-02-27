@@ -31,6 +31,18 @@ class DataParseUnitTests {
     }
 
     @Test
+    fun parseDirectionDataDistance() {
+        val classLoader = javaClass.classLoader
+        val resource = classLoader!!.getResourceAsStream("sampleDirectionsData.json")
+        val data = resource.bufferedReader().use { (it.readText()) }
+
+        val apiDataParser = ApiDataParser()
+        val result = apiDataParser.parseDirectionsDistance(data)
+
+        assertEquals(275f, result)
+    }
+
+    @Test
     fun parseDirectionData() {
         val classLoader = javaClass.classLoader
         val resource = classLoader!!.getResourceAsStream("sampleDirectionsData.json")

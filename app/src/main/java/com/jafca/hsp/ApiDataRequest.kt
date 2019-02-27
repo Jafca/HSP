@@ -2,6 +2,7 @@ package com.jafca.hsp
 
 import android.content.Context
 import android.os.AsyncTask
+import android.preference.PreferenceManager
 import android.util.Log
 import java.io.IOException
 import java.io.InputStream
@@ -33,7 +34,11 @@ class ApiDataRequest : AsyncTask<Any, String, String>() {
         var inputStream: InputStream? = null
         var urlConnection: HttpURLConnection? = null
 
-        if (BuildConfig.DEBUG) {
+        if (PreferenceManager.getDefaultSharedPreferences(context).getBoolean(
+                context.resources.getString(R.string.pref_sampleData),
+                true
+            )
+        ) {
             try {
                 inputStream = if (myUrl.startsWith("https://maps.googleapis.com/maps/api/place")) {
                     context.resources.openRawResource(R.raw.nearbysearch)

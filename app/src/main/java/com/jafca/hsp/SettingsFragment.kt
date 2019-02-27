@@ -21,22 +21,36 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     private var listener: SharedPreferences.OnSharedPreferenceChangeListener =
         SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
-            if (key == getString(R.string.pref_smart)) {
-                val switchPreference = findPreference<Preference>(getString(R.string.pref_smart)) as SwitchPreference
-                switchPreference.isChecked = prefs.getBoolean(getString(R.string.pref_smart), true)
-            } else if (key == getString(R.string.pref_speed)) {
-                var speed = prefs.getString(getString(R.string.pref_speed), "")
-                if (speed.toFloatOrNull() == null) {
-                    speed = "5"
-                } else if (speed.toFloat() < 0.1f) {
-                    speed = "0.1"
+            when (key) {
+                getString(R.string.pref_smart) -> {
+                    val switchPreference =
+                        findPreference<Preference>(getString(R.string.pref_smart)) as SwitchPreference
+                    switchPreference.isChecked = prefs.getBoolean(getString(R.string.pref_smart), true)
                 }
-                prefs.edit().putString(getString(R.string.pref_speed), speed).apply()
+                getString(R.string.pref_speed) -> {
+                    var speed = prefs.getString(getString(R.string.pref_speed), "")
+                    if (speed.toFloatOrNull() == null) {
+                        speed = "5"
+                    } else if (speed.toFloat() < 0.1f) {
+                        speed = "0.1"
+                    }
+                    prefs.edit().putString(getString(R.string.pref_speed), speed).apply()
 
-                val speedEditTextPreference =
-                    findPreference<Preference>(getString(R.string.pref_speed)) as EditTextPreference
-                speedEditTextPreference.text = speed
-                speedEditTextPreference.parent?.title = "Walking Speed (currently $speed kph)"
+                    val speedEditTextPreference =
+                        findPreference<Preference>(getString(R.string.pref_speed)) as EditTextPreference
+                    speedEditTextPreference.text = speed
+                    speedEditTextPreference.parent?.summary = "Walking speed = $speed kph"
+                }
+                getString(R.string.pref_directDistance) -> {
+                    val switchPreference =
+                        findPreference<Preference>(getString(R.string.pref_directDistance)) as SwitchPreference
+                    switchPreference.isChecked = prefs.getBoolean(getString(R.string.pref_directDistance), true)
+                }
+                getString(R.string.pref_sampleData) -> {
+                    val switchPreference =
+                        findPreference<Preference>(getString(R.string.pref_sampleData)) as SwitchPreference
+                    switchPreference.isChecked = prefs.getBoolean(getString(R.string.pref_sampleData), true)
+                }
             }
         }
 
@@ -53,8 +67,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
             editText.selectAll()
         }
 
-        speedEditTextPreference.parent?.title =
-            "Walking Speed (currently ${defPrefs.getString(getString(R.string.pref_speed), "5")} kph)"
+        speedEditTextPreference.parent?.summary =
+            "Walking speed = ${defPrefs.getString(getString(R.string.pref_speed), "5")} kph"
 
         val calcSpeedButton = findPreference<Preference>("pref_calcSpeed")
         calcSpeedButton.onPreferenceClickListener = Preference.OnPreferenceClickListener {

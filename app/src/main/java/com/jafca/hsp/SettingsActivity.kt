@@ -28,11 +28,13 @@ class SettingsActivity : AppCompatActivity() {
             builder.setMessage(getString(R.string.reset_settings_text))
 
             builder.setPositiveButton("YES") { _, _ ->
-                PreferenceManager.getDefaultSharedPreferences(applicationContext)
-                    .edit()
-                    .remove(getString(R.string.pref_smart))
-                    .remove(getString(R.string.pref_speed))
-                    .apply()
+                with(PreferenceManager.getDefaultSharedPreferences(applicationContext).edit()) {
+                    putBoolean(getString(R.string.pref_smart), true)
+                    putString(getString(R.string.pref_speed), "5")
+                    putBoolean(getString(R.string.pref_directDistance), true)
+                    putBoolean(getString(R.string.pref_sampleData), true)
+                    apply()
+                }
             }
             builder.setNegativeButton("CANCEL") { _, _ -> }
 

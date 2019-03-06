@@ -53,10 +53,10 @@ class NotificationService : JobIntentService() {
     @SuppressLint("MissingPermission")
     override fun onHandleWork(intent: Intent) {
         createChannel()
+        val defPrefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+
         if (intent.extras != null) {
             val timestamp = intent.extras!!.getLong("timestamp")
-            val defPrefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
-
             if (timestamp > 0) {
                 if (intent.extras!!.getString("reason") == "notification") {
                     sendNotification("Parking Time Limit", "Your time limit is about to expire")
@@ -104,9 +104,9 @@ class NotificationService : JobIntentService() {
                             }
                         })
                 }
-            } else if (defPrefs.getBoolean(getString(R.string.pref_detectParking), true)) {
-                sendNotification("Parking Detected", "Do you want to save your parked location?", 1001)
             }
+        } else if (defPrefs.getBoolean(getString(R.string.pref_detectParking), true)) {
+            sendNotification("Parking Detected", "Do you want to save your parked location?", 1001)
         }
     }
 

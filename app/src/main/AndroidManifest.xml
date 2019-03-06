@@ -10,6 +10,7 @@
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="18" />
+    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
 
     <uses-feature
         android:name="android.hardware.camera"
@@ -61,9 +62,18 @@
         <receiver
             android:name=".CheckerReceiver"
             android:enabled="true" />
+        <receiver
+            android:name=".TransitionReceiver"
+            android:exported="false"
+            android:permission="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
 
         <service
             android:name=".NotificationService"
+            android:enabled="true"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <service
+            android:name=".TransitionService"
             android:enabled="true"
             android:permission="android.permission.BIND_JOB_SERVICE" />
 

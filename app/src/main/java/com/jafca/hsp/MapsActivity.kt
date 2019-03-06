@@ -243,6 +243,8 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                 }
             }
             dbHandler.post(task)
+        } else {
+            TransitionService.enqueueWork(applicationContext, Intent().putExtra("start", true))
         }
     }
 
@@ -290,6 +292,8 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                     }
 
                     markerMap[mMap.addMarker(markerOptions)] = CURRENT_PARKING
+
+                    TransitionService.enqueueWork(applicationContext, Intent().putExtra("start", false))
                 }
             }
 
@@ -304,6 +308,8 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                 file.delete()
                 removeParkedLocation()
                 NotificationUtils().cancelAlarms(applicationContext)
+
+                TransitionService.enqueueWork(applicationContext, Intent().putExtra("start", true))
             }
 
             builder.setNegativeButton("CANCEL") { _, _ -> }

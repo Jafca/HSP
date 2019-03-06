@@ -33,6 +33,7 @@ class SettingsActivity : AppCompatActivity() {
                     putString(getString(R.string.pref_speed), "5")
                     putBoolean(getString(R.string.pref_directDistance), true)
                     putBoolean(getString(R.string.pref_sampleData), true)
+                    putBoolean(getString(R.string.pref_detectParking), true)
                     apply()
                 }
             }

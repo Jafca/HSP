@@ -51,6 +51,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
                         findPreference<Preference>(getString(R.string.pref_sampleData)) as SwitchPreference
                     switchPreference.isChecked = prefs.getBoolean(getString(R.string.pref_sampleData), true)
                 }
+                getString(R.string.pref_detectParking) -> {
+                    val switchPreference =
+                        findPreference<Preference>(getString(R.string.pref_detectParking)) as SwitchPreference
+                    switchPreference.isChecked = prefs.getBoolean(getString(R.string.pref_detectParking), true)
+                }
             }
         }
 

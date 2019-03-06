@@ -22,7 +22,6 @@ import java.util.concurrent.Executors
 
 class NotificationService : JobIntentService() {
     private lateinit var mNotification: Notification
-    private val mNotificationId: Int = 1000
 
     companion object {
         private const val JOB_ID = 1000
@@ -56,8 +55,9 @@ class NotificationService : JobIntentService() {
         createChannel()
         if (intent.extras != null) {
             val timestamp = intent.extras!!.getLong("timestamp")
+            val defPrefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+
             if (timestamp > 0) {
-                val defPrefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
                 if (intent.extras!!.getString("reason") == "notification") {
                     sendNotification("Parking Time Limit", "Your time limit is about to expire")
                 } else if (defPrefs.getBoolean(getString(R.string.pref_smart), true)) {
@@ -104,6 +104,8 @@ class NotificationService : JobIntentService() {
                             }
                         })
                 }
+            } else if (defPrefs.getBoolean(getString(R.string.pref_detectParking), true)) {
+                sendNotification("Parking Detected", "Do you want to save your parked location?", 1001)
             }
         }
     }
@@ -118,7 +120,7 @@ class NotificationService : JobIntentService() {
         }
     }
 
-    private fun sendNotification(title: String, message: String) {
+    private fun sendNotification(title: String, message: String, mNotificationId: Int = 1000) {
         val context = this.applicationContext
         val notificationManager: NotificationManager =
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

@@ -23,6 +23,14 @@
             android:summaryOn="Calculates length of direct path between the two locations"
             android:title="Use Direct Distance" />
     </PreferenceCategory>
+    <PreferenceCategory android:title="Auto-Detect Parking">
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="@string/pref_detectParking"
+            android:summaryOff="No notification sent after you park"
+            android:summaryOn="Sends notification after you park"
+            android:title="Notification" />
+    </PreferenceCategory>
     <PreferenceCategory android:title="Developer Options">
         <SwitchPreference
             android:defaultValue="true"

@@ -9,6 +9,11 @@ import android.os.SystemClock
 import android.preference.PreferenceManager
 
 class NotificationUtils {
+    companion object {
+        private const val REMINDER_REQUEST_CODE = 0
+        private const val CHECKER_REQUEST_CODE = 1
+    }
+
     fun setNotification(context: Context, timeInMilliSeconds: Long, lat: Double, lon: Double) {
         if (timeInMilliSeconds > 0) {
             cancelAlarms(context)
@@ -26,7 +31,7 @@ class NotificationUtils {
             alarmManager.set(
                 AlarmManager.RTC_WAKEUP,
                 timeInMilliSeconds,
-                PendingIntent.getBroadcast(context, 0, reminderIntent, 0)
+                PendingIntent.getBroadcast(context, REMINDER_REQUEST_CODE, reminderIntent, 0)
             )
 
             val checkerIntent = Intent(context.applicationContext, CheckerReceiver::class.java)
@@ -34,7 +39,7 @@ class NotificationUtils {
                 AlarmManager.ELAPSED_REALTIME,
                 SystemClock.elapsedRealtime(),
                 5 * 60 * 1000, // 5 minutes
-                PendingIntent.getBroadcast(context, 1, checkerIntent, 0)
+                PendingIntent.getBroadcast(context, CHECKER_REQUEST_CODE, checkerIntent, 0)
             )
         }
     }

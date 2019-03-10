@@ -2,6 +2,8 @@ package com.jafca.hsp
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
@@ -170,6 +172,13 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                 )
             }
         })
+
+        if (intent != null && intent.action == "DELETE_LOCATION") {
+            if (sharedPrefs.getLong(getString(R.string.pref_locationId), -1) != -1L) {
+                currentParkedLocation = ParkedLocation(null, 0.0, 0.0, null)
+                onAddLocationButtonClick()
+            }
+        }
     }
 
     private fun startHistoryActivity(latLng: LatLng) {
@@ -700,6 +709,15 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
             addPhotoButton.isEnabled = true
             shareButton.isEnabled = true
         }
+        refreshWidgets()
+    }
+
+    private fun refreshWidgets() {
+        val appWidgetManager = AppWidgetManager.getInstance(this)
+        val allWidgetIds = appWidgetManager.getAppWidgetIds(ComponentName(this, ParkingWidget::class.java))
+        val updateIntent = Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE)
+        updateIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, allWidgetIds)
+        sendBroadcast(updateIntent)
     }
 
     private fun setStartTags() {

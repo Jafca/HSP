@@ -25,4 +25,5 @@
     <string name="still">Still</string>
     <string name="walking">Walking</string>
     <string name="running">Running</string>
+    <string name="widget_button_desc">WidgetButton</string>
 </resources>

@@ -1,10 +1,13 @@
 package com.jafca.hsp
 
 import android.app.Activity
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
+import android.preference.PreferenceManager
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AlertDialog
@@ -93,7 +96,32 @@ class HistoryActivity : AppCompatActivity(), ParkedLocationAdapter.HistoryListen
             builder.setMessage(getString(R.string.delete_history_text))
 
             builder.setPositiveButton("YES") { _, _ ->
-                val task = Runnable { mDb?.parkedLocationDao()?.deleteNonStarred() }
+                val task = Runnable {
+                    mDb?.parkedLocationDao()?.deleteNonStarred()
+
+                    val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+                    val parkedLocation = mDb?.parkedLocationDao()?.getById(
+                        sharedPrefs.getLong(
+                            getString(R.string.pref_locationId), -1
+                        )
+                    )
+
+                    if (parkedLocation == null) {
+                        with(sharedPrefs.edit()) {
+                            putLong(getString(R.string.pref_locationId), -1)
+                            apply()
+                        }
+
+                        sendBroadcast(
+                            Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE).putExtra(
+                                AppWidgetManager.EXTRA_APPWIDGET_IDS,
+                                AppWidgetManager.getInstance(applicationContext).getAppWidgetIds(
+                                    ComponentName(applicationContext, ParkingWidget::class.java)
+                                )
+                            )
+                        )
+                    }
+                }
                 handler.post(task)
             }
 
@@ -113,7 +141,28 @@ class HistoryActivity : AppCompatActivity(), ParkedLocationAdapter.HistoryListen
     }
 
     override fun delete(parkedLocation: ParkedLocation) {
-        postViewModel.deleteParkedLocation(parkedLocation)
+        val task = Runnable {
+            val id = parkedLocation.id
+            mDb?.parkedLocationDao()?.delete(parkedLocation)
+            val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+
+            if (id == sharedPrefs.getLong(getString(R.string.pref_locationId), -1)) {
+                with(sharedPrefs.edit()) {
+                    putLong(getString(R.string.pref_locationId), -1)
+                    apply()
+                }
+
+                sendBroadcast(
+                    Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE).putExtra(
+                        AppWidgetManager.EXTRA_APPWIDGET_IDS,
+                        AppWidgetManager.getInstance(applicationContext).getAppWidgetIds(
+                            ComponentName(applicationContext, ParkingWidget::class.java)
+                        )
+                    )
+                )
+            }
+        }
+        handler.post(task)
     }
 
     override fun returnLocation(lat: Double, lon: Double, title: String) {

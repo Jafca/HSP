@@ -5,6 +5,8 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
@@ -12,6 +14,8 @@ import android.graphics.Color
 import android.location.Location
 import android.media.RingtoneManager
 import android.os.Build
+import android.os.Handler
+import android.os.HandlerThread
 import android.preference.PreferenceManager
 import androidx.core.app.JobIntentService
 import com.google.android.gms.location.LocationServices
@@ -104,6 +108,53 @@ class NotificationService : JobIntentService() {
                             }
                         })
                 }
+            } else if (intent.extras!!.getBoolean("widget")) {
+                if (defPrefs.getLong(getString(R.string.pref_locationId), -1) == -1L) {
+                    val mDb = ParkedLocationDatabase.getInstance(applicationContext)
+                    val handlerThread = HandlerThread("DbThread")
+                    handlerThread.start()
+                    val dbHandler = Handler(handlerThread.looper)
+
+                    val runnableListener = object : MapsActivity.RunnableListener {
+                        override fun onResult(result: Any) {
+                            val currentLatLng = result as LatLng
+                            val parkedLocation = ParkedLocation(
+                                null,
+                                currentLatLng.latitude,
+                                currentLatLng.longitude,
+                                Date()
+                            )
+                            val task = Runnable {
+                                val locationId = mDb?.parkedLocationDao()?.insert(parkedLocation)
+                                with(PreferenceManager.getDefaultSharedPreferences(applicationContext).edit()) {
+                                    putLong(getString(R.string.pref_locationId), locationId!!)
+                                    apply()
+                                }
+                                sendBroadcast(
+                                    Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE).putExtra(
+                                        AppWidgetManager.EXTRA_APPWIDGET_IDS,
+                                        AppWidgetManager.getInstance(applicationContext).getAppWidgetIds(
+                                            ComponentName(applicationContext, ParkingWidget::class.java)
+                                        )
+                                    )
+                                )
+                            }
+                            dbHandler.post(task)
+
+                            TransitionService.enqueueWork(applicationContext, Intent().putExtra("start", false))
+                        }
+                    }
+
+                    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+                    fusedLocationClient.lastLocation.addOnSuccessListener(
+                        Executors.newSingleThreadExecutor(),
+                        OnSuccessListener { location ->
+                            if (location != null) {
+                                val currentLatLng = LatLng(location.latitude, location.longitude)
+                                runnableListener.onResult(currentLatLng)
+                            }
+                        })
+                }
             }
         } else if (defPrefs.getBoolean(getString(R.string.pref_detectParking), true)) {
             sendNotification("Parking Detected", "Do you want to save your parked location?", 1001)
@@ -135,12 +186,13 @@ class NotificationService : JobIntentService() {
         val pendingIntent = PendingIntent.getActivity(context, 0, notifyIntent, PendingIntent.FLAG_UPDATE_CURRENT)
         val res = this.resources
         val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        val icon = if (mNotificationId == 1000) R.drawable.alarm else R.drawable.pin_drop
 
         // Set the intent that will fire when the user taps the notification
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             mNotification = Notification.Builder(this, CHANNEL_ID)
                 .setContentIntent(pendingIntent)
-                .setSmallIcon(R.drawable.alarm)
+                .setSmallIcon(icon)
                 .setLargeIcon(BitmapFactory.decodeResource(res, R.mipmap.ic_launcher))
                 .setAutoCancel(true)
                 .setContentTitle(title)
@@ -149,7 +201,7 @@ class NotificationService : JobIntentService() {
         } else {
             mNotification = Notification.Builder(this)
                 .setContentIntent(pendingIntent)
-                .setSmallIcon(R.drawable.alarm)
+                .setSmallIcon(icon)
                 .setLargeIcon(BitmapFactory.decodeResource(res, R.mipmap.ic_launcher))
                 .setAutoCancel(true)
                 .setPriority(Notification.PRIORITY_MAX)

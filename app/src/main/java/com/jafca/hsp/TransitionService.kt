@@ -64,45 +64,9 @@ class TransitionService : JobIntentService() {
         val request = ActivityTransitionRequest(transitions)
         val task =
             ActivityRecognition.getClient(applicationContext).requestActivityTransitionUpdates(request, pendingIntent)
-
-        task.addOnSuccessListener {
-            Toast.makeText(
-                applicationContext,
-                "Started parking auto-detection",
-                Toast.LENGTH_SHORT
-            )
-                .show()
-        }
-
-        task.addOnFailureListener {
-            Toast.makeText(
-                applicationContext,
-                "Failed to start parking auto-detection",
-                Toast.LENGTH_SHORT
-            )
-                .show()
-        }
     }
 
     private fun removeActivityTransitionUpdates() {
         val task = ActivityRecognition.getClient(applicationContext).removeActivityTransitionUpdates(pendingIntent)
-
-        task.addOnSuccessListener {
-            Toast.makeText(
-                applicationContext,
-                "Stopped parking auto-detection",
-                Toast.LENGTH_SHORT
-            )
-                .show()
-
-        }
-
-        task.addOnFailureListener {
-            Toast.makeText(
-                applicationContext,
-                "Failed to stop parking auto-detection",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
     }
 }

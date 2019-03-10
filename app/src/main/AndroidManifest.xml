@@ -56,6 +56,15 @@
             android:label="Settings"
             android:parentActivityName=".MapsActivity" />
 
+        <receiver android:name=".ParkingWidget">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/parking_widget_info" />
+        </receiver>
         <receiver
             android:name=".AlarmReceiver"
             android:enabled="true" />
@@ -71,7 +80,6 @@
             android:name=".NotificationService"
             android:enabled="true"
             android:permission="android.permission.BIND_JOB_SERVICE" />
-
         <service
             android:name=".TransitionService"
             android:enabled="true"

@@ -3,7 +3,6 @@ package com.jafca.hsp
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.widget.Toast
 import com.google.android.gms.location.ActivityTransition
 import com.google.android.gms.location.ActivityTransitionResult
 import com.google.android.gms.location.DetectedActivity
@@ -26,8 +25,8 @@ class TransitionReceiver : BroadcastReceiver() {
                     NotificationService.enqueueWork(context, Intent())
                 }
             }
-
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        } else {
+            NotificationService.enqueueWork(context, Intent().putExtra("widget", true))
         }
     }
 

@@ -15,10 +15,6 @@ class ParkedLocationViewModel(application: Application) : AndroidViewModel(appli
         return parkedLocationDao.getAllLive()
     }
 
-    fun deleteParkedLocation(parkedLocation: ParkedLocation) {
-        executorService.execute { parkedLocationDao.delete(parkedLocation) }
-    }
-
     fun updateParkedLocation(parkedLocation: ParkedLocation) {
         executorService.execute { parkedLocationDao.update(parkedLocation) }
     }

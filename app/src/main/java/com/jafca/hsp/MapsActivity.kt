@@ -144,7 +144,17 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
 
         }
         infoFab.setOnClickListener {
+            val builder = AlertDialog.Builder(this@MapsActivity)
+            builder.setTitle("About")
+            builder.setMessage(
+                "Park, Save, Locate, Repeat\n\n" +
+                        "Version ${BuildConfig.VERSION_NAME}\n" +
+                        "Copyright \u00A9 ${Calendar.getInstance().get(Calendar.YEAR)} Jafca"
+            )
 
+            val dialog: AlertDialog = builder.create()
+            dialog.show()
+            closeFABMenu()
         }
 
         model = this.run {

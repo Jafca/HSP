@@ -22,7 +22,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.android.synthetic.main.activity_history.*
 
-
 class HistoryActivity : AppCompatActivity(), ParkedLocationAdapter.HistoryListener {
     private var mDb: ParkedLocationDatabase? = null
     private lateinit var handler: Handler
@@ -46,13 +45,13 @@ class HistoryActivity : AppCompatActivity(), ParkedLocationAdapter.HistoryListen
             this@HistoryActivity,
             RecyclerView.VERTICAL, false
         )
-        recyclerView?.addItemDecoration(
+        historyRecyclerView?.addItemDecoration(
             DividerItemDecoration(
                 this@HistoryActivity,
                 DividerItemDecoration.VERTICAL
             )
         )
-        recyclerView?.layoutManager = mLinearLayoutManager
+        historyRecyclerView?.layoutManager = mLinearLayoutManager
 
         val task = Runnable {
             var parkedLocations = mDb?.parkedLocationDao()?.getAll()
@@ -60,25 +59,25 @@ class HistoryActivity : AppCompatActivity(), ParkedLocationAdapter.HistoryListen
                 if (parkedLocations == null) {
                     parkedLocations = mutableListOf()
                 }
-                val mMailAdapter = ParkedLocationAdapter(
+                val parkedLocationAdapter = ParkedLocationAdapter(
                     this,
                     parkedLocations ?: mutableListOf(),
                     LatLng(intent.getDoubleExtra("lat", 0.0), intent.getDoubleExtra("lon", 0.0)),
                     this@HistoryActivity
                 )
-                recyclerView?.adapter = mMailAdapter
+                historyRecyclerView?.adapter = parkedLocationAdapter
 
                 val itemTouchHelper = ItemTouchHelper(
                     SwipeToDeleteCallback(
-                        mMailAdapter,
+                        parkedLocationAdapter,
                         ContextCompat.getDrawable(applicationContext, R.drawable.delete)!!
                     )
                 )
-                itemTouchHelper.attachToRecyclerView(recyclerView)
+                itemTouchHelper.attachToRecyclerView(historyRecyclerView)
 
                 postViewModel = ViewModelProviders.of(this).get(ParkedLocationViewModel::class.java)
                 postViewModel.getAllParkedLocations()
-                    .observe(this, Observer<List<ParkedLocation>> { posts -> mMailAdapter.setData(posts) })
+                    .observe(this, Observer<List<ParkedLocation>> { posts -> parkedLocationAdapter.setData(posts) })
             }
         }
         handler.post(task)

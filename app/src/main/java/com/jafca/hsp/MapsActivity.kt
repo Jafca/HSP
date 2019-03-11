@@ -141,7 +141,8 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
             startActivity(Intent(this, SettingsActivity::class.java))
         }
         helpFab.setOnClickListener {
-
+            closeFABMenu()
+            startActivity(Intent(this, HelpActivity::class.java))
         }
         infoFab.setOnClickListener {
             val builder = AlertDialog.Builder(this@MapsActivity)

@@ -26,4 +26,5 @@
     <string name="walking">Walking</string>
     <string name="running">Running</string>
     <string name="widget_button_desc">WidgetButton</string>
+    <string name="help_item_image_desc">HelpItemImage</string>
 </resources>

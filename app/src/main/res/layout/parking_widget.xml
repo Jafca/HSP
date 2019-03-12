@@ -10,5 +10,5 @@
         android:layout_height="match_parent"
         android:layout_gravity="center_horizontal"
         android:contentDescription="@string/widget_button_desc"
-        android:src="@drawable/delete" />
+        android:src="@drawable/ic_delete_widget" />
 </LinearLayout>

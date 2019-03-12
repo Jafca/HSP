@@ -23,9 +23,9 @@ class ParkingWidget : AppWidgetProvider() {
                     -1
                 ) != -1L
             ) {
-                views.setImageViewResource(R.id.widgetImageView, R.drawable.delete)
+                views.setImageViewResource(R.id.widgetImageView, R.drawable.ic_delete_widget)
             } else {
-                views.setImageViewResource(R.id.widgetImageView, R.drawable.pin_drop)
+                views.setImageViewResource(R.id.widgetImageView, R.drawable.ic_pin_drop_widget)
             }
 
             views.setOnClickPendingIntent(R.id.widgetImageView, getPendingIntent(context))

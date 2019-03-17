@@ -306,7 +306,9 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                             currentLatLng.longitude,
                             1
                         )
-                        markerOptions.title(geocodeMatches[0].getAddressLine(0))
+                        if (geocodeMatches.isNotEmpty()) {
+                            markerOptions.title(geocodeMatches[0].getAddressLine(0))
+                        }
                     } catch (e: IOException) {
                         e.printStackTrace()
                     }
@@ -521,6 +523,21 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                             polyline = mMap.addPolyline(polylineOptions.color(Color.RED))
                             polylineDrawn = true
                             polylineDestination = marker
+
+                            if (markerMap[marker] == CURRENT_PARKING) {
+                                try {
+                                    val geocodeMatches = Geocoder(this@MapsActivity).getFromLocation(
+                                        marker.position.latitude,
+                                        marker.position.longitude,
+                                        1
+                                    )
+                                    if (geocodeMatches.isNotEmpty()) {
+                                        marker.title = geocodeMatches[0].getAddressLine(0)
+                                    }
+                                } catch (e: IOException) {
+                                    e.printStackTrace()
+                                }
+                            }
                             marker.showInfoWindow()
 
                             val boundsBuilder = LatLngBounds.builder()

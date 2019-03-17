@@ -46,7 +46,9 @@ class ParkedLocationAdapter(
                 parkedLocations[position].lon,
                 1
             )
-            holder.location.text = geocodeMatches[0].getAddressLine(0)
+            if (geocodeMatches.isNotEmpty()) {
+                holder.location.text = geocodeMatches[0].getAddressLine(0)
+            }
         } catch (e: IOException) {
             e.printStackTrace()
         }
@@ -72,20 +74,20 @@ class ParkedLocationAdapter(
 
         if (parkedLocations[position].starred) {
             holder.star.setImageResource(R.drawable.star)
-            holder.star.tag = "star"
+            holder.star.tag = R.drawable.star
         } else {
             holder.star.setImageResource(R.drawable.star_border)
-            holder.star.tag = "unstar"
+            holder.star.tag = R.drawable.star_border
         }
 
         holder.star.setOnClickListener {
-            if (holder.star.tag == "star") {
+            if (holder.star.tag == R.drawable.star) {
                 holder.star.setImageResource(R.drawable.star_border)
-                holder.star.tag = "unstar"
+                holder.star.tag = R.drawable.star_border
                 parkedLocations[position].starred = false
             } else {
                 holder.star.setImageResource(R.drawable.star)
-                holder.star.tag = "star"
+                holder.star.tag = R.drawable.star
                 parkedLocations[position].starred = true
             }
             updateParkedLocation(parkedLocations[position])

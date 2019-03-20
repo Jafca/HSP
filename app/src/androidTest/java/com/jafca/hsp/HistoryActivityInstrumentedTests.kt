@@ -81,16 +81,14 @@ class HistoryActivityInstrumentedTests {
         starButton.check(matches(isEnabled()))
         starButton.check(matches(withTagValue(equalTo(R.drawable.star))))
 
-        val resetButton = Espresso.onView(withId(R.id.action_delete))
-        resetButton.check(matches(isDisplayed()))
-        resetButton.check(matches(isEnabled()))
-        resetButton.perform(click())
+        val deleteButton = Espresso.onView(withId(R.id.action_delete))
+        deleteButton.perform(click())
 
         onView(withText(R.string.delete_history_text)).check(matches(isDisplayed()))
         onView(withId(android.R.id.button2)).perform(click())
         historyRecyclerView.check(matches(hasChildCount(2)))
 
-        resetButton.perform(click())
+        deleteButton.perform(click())
         onView(withText(R.string.delete_history_text)).check(matches(isDisplayed()))
         onView(withId(android.R.id.button1)).perform(click())
         historyRecyclerView.check(matches(hasChildCount(1)))

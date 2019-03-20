@@ -92,6 +92,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
         dbHandler = Handler(looper)
 
         parkingFab.tag = R.string.parking_show_tag
+        menuFab.tag = R.drawable.menu
         setStartTags()
 
         addLocationButton.setOnClickListener {
@@ -434,6 +435,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
         helpFab.animate().translationY(-fabHeight - miniFabHeight * 3)
         infoFab.animate().translationY(-fabHeight - miniFabHeight * 4)
         menuFab.setImageResource(R.drawable.close)
+        menuFab.tag = R.drawable.close
     }
 
     private fun closeFABMenu() {
@@ -444,6 +446,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
         helpFab.animate().translationY(0f)
         infoFab.animate().translationY(0f)
         menuFab.setImageResource(R.drawable.menu)
+        menuFab.tag = R.drawable.menu
     }
 
     private fun showNearbyPlaces(nearbyPlaceList: List<HashMap<String, String>>, currentLatLng: LatLng) {

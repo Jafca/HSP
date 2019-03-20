@@ -91,27 +91,6 @@ class MapsActivityInstrumentedTests {
     }
 
     @Test
-    fun parkingFabInstrumentedTest() {
-        val mDb = ParkedLocationDatabase.getInstance(InstrumentationRegistry.getInstrumentation().targetContext)
-        mDb?.parkedLocationDao()?.deleteAll()
-        activityRule.launchActivity(null)
-
-        Espresso.onView(withId(R.id.menuFab)).perform(click())
-
-        val parkingFab = Espresso.onView(withId(R.id.parkingFab))
-        parkingFab.perform(click())
-
-        assertEquals(true, activityRule.activity.markerMap.isNotEmpty())
-        parkingFab.check(matches(withTagValue(equalTo(R.string.parking_hide_tag))))
-
-        Espresso.onView(withId(R.id.menuFab)).perform(click())
-        parkingFab.perform(click())
-
-        assertEquals(true, activityRule.activity.markerMap.isEmpty())
-        parkingFab.check(matches(withTagValue(equalTo(R.string.parking_show_tag))))
-    }
-
-    @Test
     fun addNoteButtonInstrumentedTest() {
         val mDb = ParkedLocationDatabase.getInstance(InstrumentationRegistry.getInstrumentation().targetContext)
         mDb?.parkedLocationDao()?.deleteAll()

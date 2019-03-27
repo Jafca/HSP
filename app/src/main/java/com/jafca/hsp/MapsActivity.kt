@@ -19,11 +19,9 @@ import android.os.HandlerThread
 import android.preference.PreferenceManager
 import android.provider.MediaStore
 import android.util.Log
-import android.view.Gravity
 import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.FileProvider
@@ -40,6 +38,7 @@ import kotlinx.android.synthetic.main.activity_maps.*
 import java.io.File
 import java.io.IOException
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
     private lateinit var mMap: GoogleMap
@@ -518,6 +517,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                         override fun onResult(result: Any) {
                             val apiDataParser = ApiDataParser()
                             val path = apiDataParser.parseDirections(result as String)
+                            val routeLength = apiDataParser.parseDirectionsDistance(result) / 1000
                             val polylineOptions = PolylineOptions()
                             for (i in 0 until path.size) {
                                 polylineOptions.addAll(path[i])
@@ -543,6 +543,22 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                             }
                             marker.showInfoWindow()
 
+                            val savedSpeed = sharedPrefs.getString(getString(R.string.pref_speed), "")
+                            val walkingSpeed = savedSpeed.toFloatOrNull() ?: 5f
+                            val time = ((routeLength / walkingSpeed) * 60 * 60 * 1000).toLong()
+                            val timeStr =
+                                "${TimeUnit.MILLISECONDS.toMinutes(time)} min ${TimeUnit.MILLISECONDS.toSeconds(time) - TimeUnit.MINUTES.toSeconds(
+                                    TimeUnit.MILLISECONDS.toMinutes(time)
+                                )} sec"
+
+                            val alertDialogBuilder = AlertDialog.Builder(this@MapsActivity)
+                            alertDialogBuilder.setTitle("Route: ${"%.2f".format(routeLength)}km, approx. $timeStr")
+                            alertDialogBuilder.setMessage(
+                                "Walking directions are in beta. Use caution – This route may be missing sidewalks or pedestrian paths."
+                            )
+
+                            alertDialogBuilder.setPositiveButton("OK") { _, _ -> }
+
                             val boundsBuilder = LatLngBounds.builder()
                             boundsBuilder.include(marker.position)
                                 .include(currentLatLng)
@@ -558,16 +574,16 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                                     width,
                                     height,
                                     padding.toInt()
-                                )
-                            )
+                                ),
+                                object : GoogleMap.CancelableCallback {
+                                    override fun onFinish() {
+                                        val dialog: AlertDialog = alertDialogBuilder.create()
+                                        dialog.show()
+                                    }
 
-                            val toast = Toast.makeText(
-                                applicationContext,
-                                "Walking directions are in beta. Use caution – This route may be missing sidewalks or pedestrian paths.",
-                                Toast.LENGTH_LONG
+                                    override fun onCancel() {}
+                                }
                             )
-                            toast.setGravity(Gravity.BOTTOM, 0, linearLayout.height)
-                            toast.show()
                         }
                     }
                     val apiDataRequest = ApiDataRequest()

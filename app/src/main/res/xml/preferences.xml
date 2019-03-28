@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory
-        android:summary="Walking speed = 5 kph"
+        android:summary="Walking speed = 5.0 kph"
         android:title="Smart Reminders">
         <SwitchPreference
             android:defaultValue="true"
@@ -13,7 +13,7 @@
             android:key="pref_calcSpeed"
             android:title="Click here while walking to calculate your speed" />
         <EditTextPreference
-            android:defaultValue="5"
+            android:defaultValue="5.0"
             android:key="@string/pref_speed"
             android:title="Enter speed (kph) manually" />
         <SwitchPreference

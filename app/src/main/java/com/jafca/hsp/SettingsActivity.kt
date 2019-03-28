@@ -30,7 +30,7 @@ class SettingsActivity : AppCompatActivity() {
             builder.setPositiveButton("YES") { _, _ ->
                 with(PreferenceManager.getDefaultSharedPreferences(applicationContext).edit()) {
                     putBoolean(getString(R.string.pref_smart), true)
-                    putString(getString(R.string.pref_speed), "5")
+                    putString(getString(R.string.pref_speed), "5.0")
                     putBoolean(getString(R.string.pref_directDistance), true)
                     putBoolean(getString(R.string.pref_sampleData), true)
                     putBoolean(getString(R.string.pref_detectParking), true)

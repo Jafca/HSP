@@ -111,6 +111,8 @@ class HistoryActivity : AppCompatActivity(), ParkedLocationAdapter.HistoryListen
                             apply()
                         }
 
+                        NotificationUtils().cancelAlarms(applicationContext)
+
                         sendBroadcast(
                             Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE).putExtra(
                                 AppWidgetManager.EXTRA_APPWIDGET_IDS,
@@ -150,6 +152,8 @@ class HistoryActivity : AppCompatActivity(), ParkedLocationAdapter.HistoryListen
                     putLong(getString(R.string.pref_locationId), -1)
                     apply()
                 }
+
+                NotificationUtils().cancelAlarms(applicationContext)
 
                 sendBroadcast(
                     Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE).putExtra(

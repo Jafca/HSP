@@ -28,17 +28,17 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     switchPreference.isChecked = prefs.getBoolean(getString(R.string.pref_smart), true)
                 }
                 getString(R.string.pref_speed) -> {
-                    var speed = prefs.getString(getString(R.string.pref_speed), "")
-                    if (speed.toFloatOrNull() == null) {
-                        speed = "5"
-                    } else if (speed.toFloat() < 0.1f) {
-                        speed = "0.1"
+                    var speed = prefs.getString(getString(R.string.pref_speed), "5.0").toFloatOrNull()
+                    if(speed == null)
+                        speed = 5.0f
+                    if (speed < 0.1f) {
+                        speed = 0.1f
                     }
-                    prefs.edit().putString(getString(R.string.pref_speed), speed).apply()
+                    prefs.edit().putString(getString(R.string.pref_speed), speed.toString()).apply()
 
                     val speedEditTextPreference =
                         findPreference<Preference>(getString(R.string.pref_speed)) as EditTextPreference
-                    speedEditTextPreference.text = speed
+                    speedEditTextPreference.text = speed.toString()
                     speedEditTextPreference.parent?.summary = "Walking speed = $speed kph"
                 }
                 getString(R.string.pref_directDistance) -> {
@@ -73,7 +73,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
 
         speedEditTextPreference.parent?.summary =
-            "Walking speed = ${defPrefs.getString(getString(R.string.pref_speed), "5")} kph"
+            "Walking speed = ${defPrefs.getString(getString(R.string.pref_speed), "5.0")} kph"
 
         val calcSpeedButton = findPreference<Preference>("pref_calcSpeed")
         calcSpeedButton.onPreferenceClickListener = Preference.OnPreferenceClickListener {

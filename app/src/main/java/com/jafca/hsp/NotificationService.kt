@@ -71,8 +71,7 @@ class NotificationService : JobIntentService() {
                             val lat = intent.extras!!.getDouble("lat")
                             val lon = intent.extras!!.getDouble("lon")
 
-                            val savedSpeed = defPrefs.getString(getString(R.string.pref_speed), "")
-                            val walkingSpeed = savedSpeed.toFloatOrNull() ?: 5f
+                            val walkingSpeed = defPrefs.getString(getString(R.string.pref_speed), "5.0").toFloat()
 
                             var distance: Float
                             if (defPrefs.getBoolean(getString(R.string.pref_directDistance), true)) {

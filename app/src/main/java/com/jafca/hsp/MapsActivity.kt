@@ -25,6 +25,7 @@ import android.widget.ImageView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.FileProvider
+import androidx.core.view.ViewCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProviders
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -93,6 +94,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
         parkingFab.tag = R.string.parking_show_tag
         menuFab.tag = R.drawable.menu
         setStartTags()
+        ViewCompat.setElevation(photoImageView, 22f)
 
         addLocationButton.setOnClickListener {
             onAddLocationButtonClick()
@@ -153,9 +155,9 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                         "Copyright \u00A9 ${Calendar.getInstance().get(Calendar.YEAR)} Jafca"
             )
 
+            closeFABMenu()
             val dialog: AlertDialog = builder.create()
             dialog.show()
-            closeFABMenu()
         }
 
         model = this.run {
@@ -174,7 +176,10 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                         set(Calendar.MINUTE, hourMinute.second)
                     }
                 }
-                val mNotificationTime = calendar.timeInMillis
+                var mNotificationTime = calendar.timeInMillis
+                if (mNotificationTime < Calendar.getInstance().timeInMillis)
+                    mNotificationTime += TimeUnit.DAYS.toMillis(1)
+
                 NotificationUtils().setNotification(
                     applicationContext,
                     mNotificationTime,
@@ -189,6 +194,14 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                 currentParkedLocation = ParkedLocation(null, 0.0, 0.0, null)
                 onAddLocationButtonClick()
             }
+        }
+    }
+
+    override fun onBackPressed() {
+        when {
+            photoImageView.visibility != View.INVISIBLE -> photoImageView.performClick()
+            fabOpen -> closeFABMenu()
+            else -> super.onBackPressed()
         }
     }
 
@@ -478,7 +491,8 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
             )
         }
 
-        val bounds = markerMap.keys.fold(LatLngBounds.builder()) { builder, it -> builder.include(it.position) }.build()
+        val bounds =
+            markerMap.keys.fold(LatLngBounds.builder()) { builder, it -> builder.include(it.position) }.build()
         val width = resources.displayMetrics.widthPixels
         val height = resources.displayMetrics.heightPixels
         val padding = width * 0.2
@@ -543,8 +557,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                             }
                             marker.showInfoWindow()
 
-                            val savedSpeed = sharedPrefs.getString(getString(R.string.pref_speed), "")
-                            val walkingSpeed = savedSpeed.toFloatOrNull() ?: 5f
+                            val walkingSpeed = sharedPrefs.getString(getString(R.string.pref_speed), "5.0").toFloat()
                             val time = ((routeLength / walkingSpeed) * 60 * 60 * 1000).toLong()
                             val timeStr =
                                 "${TimeUnit.MILLISECONDS.toMinutes(time)} min ${TimeUnit.MILLISECONDS.toSeconds(time) - TimeUnit.MINUTES.toSeconds(

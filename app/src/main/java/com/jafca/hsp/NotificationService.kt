@@ -23,6 +23,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.OnSuccessListener
 import java.util.*
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 class NotificationService : JobIntentService() {
     private lateinit var mNotification: Notification
@@ -164,8 +165,9 @@ class NotificationService : JobIntentService() {
         val time = (distance / walkingSpeed) * 60 * 60 * 1000 // milliseconds
         val currentTime = Calendar.getInstance().timeInMillis
         if (currentTime + time > timestamp) {
+            val timeStr = "${TimeUnit.MILLISECONDS.toMinutes(time.toLong()) + 1} minutes"
             val message =
-                "You have ${"%.2f".format(distance)}km to walk before your time limit expires"
+                "You have $timeStr before your time limit expires.\nIf you start walking now, you will get there in time"
             sendNotification("Parking Time Limit", message)
         }
     }
